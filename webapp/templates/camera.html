@@ -104,7 +104,7 @@
       .camera-frame img {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
       }
 
       .camera-frame .placeholder-text {
@@ -345,6 +345,7 @@
         </div>
 
         <button class="btn" id="bgBtn">bg: black</button>
+        <button class="btn" id="flipBtn" title="Flip camera">flip</button>
       </div>
 
       <!-- Snapshot actions (hidden until a snapshot is taken) -->
@@ -372,6 +373,7 @@
       const snapCap = document.getElementById("snapCap");
       const startBtn = document.getElementById("startBtn");
       const shutterBtn = document.getElementById("shutterBtn");
+      const flipBtn = document.getElementById("flipBtn");
       const sizeRange = document.getElementById("sizeRange");
       const sizeVal = document.getElementById("sizeVal");
       const blockRange = document.getElementById("blockRange");
@@ -387,15 +389,18 @@
       const snapDismiss = document.getElementById("snapDismiss");
 
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      // Max dimension to scale frames down to before sending to server
+      const SEND_MAX_DIM = isMobile ? 320 : 480;
 
       let bgColor = "black";
+      let facingMode = isMobile ? "environment" : "user";
       let running = false;
       let stream = null;
-      let loopId = null;
-      let lastFrame = 0;
-      let frameCount = 0;
       let snapshotMode = false;
       let lastSnapshotBlob = null;
+      let inflight = false;         // is a request currently in-flight?
+      let frameCount = 0;
+      let lastFpsTime = 0;
 
       sizeRange.addEventListener("input", () => sizeVal.textContent = sizeRange.value);
       blockRange.addEventListener("input", () => blockVal.textContent = blockRange.value);
@@ -406,44 +411,49 @@
         mosaic.style.background = bgColor === "white" ? "#fff" : "transparent";
       });
 
+      // --- Flip camera ---
+      flipBtn.addEventListener("click", async () => {
+        if (!running) return;
+        facingMode = facingMode === "environment" ? "user" : "environment";
+        // Restart stream with new facing mode
+        if (stream) { stream.getTracks().forEach(t => t.stop()); }
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode, width: { ideal: isMobile ? 720 : 1280 }, height: { ideal: isMobile ? 1280 : 720 } },
+            audio: false,
+          });
+          cam.srcObject = stream;
+          await cam.play();
+        } catch (err) {
+          // revert if failed
+          facingMode = facingMode === "environment" ? "user" : "environment";
+        }
+      });
+
       startBtn.addEventListener("click", toggleStream);
 
       document.addEventListener("keydown", (e) => {
         if (e.key === " ") {
           e.preventDefault();
-          if (snapshotMode) {
-            dismissSnapshot();
-          } else {
-            toggleStream();
-          }
+          if (snapshotMode) dismissSnapshot();
+          else toggleStream();
         }
-        if ((e.key === "s" || e.key === "S") && running && !snapshotMode) {
-          takeSnapshot();
-        }
+        if ((e.key === "s" || e.key === "S") && running && !snapshotMode) takeSnapshot();
         if (e.key === "f" || e.key === "F") {
-          if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-          } else {
-            document.exitFullscreen();
-          }
+          if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+          else document.exitFullscreen();
         }
       });
 
       async function toggleStream() {
-        if (running) {
-          stopStream();
-        } else {
-          await startStream();
-        }
+        if (running) stopStream();
+        else await startStream();
       }
 
       async function startStream() {
-        const videoConstraints = isMobile
-          ? { facingMode: "environment", width: { ideal: 720 }, height: { ideal: 1280 } }
-          : { width: { ideal: 1280 }, height: { ideal: 720 } };
         try {
           stream = await navigator.mediaDevices.getUserMedia({
-            video: videoConstraints,
+            video: { facingMode, width: { ideal: isMobile ? 720 : 1280 }, height: { ideal: isMobile ? 1280 : 720 } },
             audio: false,
           });
         } catch (err) {
@@ -455,21 +465,22 @@
         await cam.play();
 
         running = true;
+        inflight = false;
         startBtn.textContent = "stop";
         startBtn.classList.add("active");
         shutterBtn.disabled = false;
         placeholderText.style.display = "none";
         mosaic.style.display = "";
         recDot.classList.add("active");
-        lastFrame = performance.now();
+        lastFpsTime = performance.now();
         frameCount = 0;
-        loop();
+        requestAnimationFrame(loop);
       }
 
       function stopStream() {
         running = false;
         snapshotMode = false;
-        if (loopId) { clearTimeout(loopId); loopId = null; }
+        inflight = false;
         if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
         cam.srcObject = null;
         mosaic.style.display = "none";
@@ -487,27 +498,21 @@
       function takeSnapshot() {
         if (!mosaic.src || !mosaic.naturalWidth) return;
 
-        // Flash effect
         flash.classList.add("fire");
         setTimeout(() => flash.classList.remove("fire"), 120);
 
-        // Capture current mosaic frame to a canvas for download
         snapCap.width = mosaic.naturalWidth;
         snapCap.height = mosaic.naturalHeight;
         const ctx = snapCap.getContext("2d");
         ctx.drawImage(mosaic, 0, 0);
 
-        // Pause the live stream
         snapshotMode = true;
-        if (loopId) { clearTimeout(loopId); loopId = null; }
         recDot.classList.remove("active");
 
-        // Create download URL and store blob for share API
         snapCap.toBlob((blob) => {
           lastSnapshotBlob = blob;
           const url = URL.createObjectURL(blob);
           snapDownload.href = url;
-          // Show download link as fallback if share API not available
           if (!navigator.canShare) {
             snapDownload.style.display = "";
             snapSave.style.display = "none";
@@ -526,12 +531,11 @@
         snapshotMode = false;
         snapshotActions.classList.add("hidden");
         if (stream && stream.active) {
-          // Resume live
           recDot.classList.add("active");
           startBtn.textContent = "stop";
           startBtn.classList.add("active");
           shutterBtn.disabled = false;
-          loop();
+          requestAnimationFrame(loop);
         } else {
           stopStream();
         }
@@ -545,10 +549,7 @@
         if (!lastSnapshotBlob) return;
         const file = new File([lastSnapshotBlob], "emojify-snapshot.jpg", { type: "image/jpeg" });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file] });
-          } catch (err) {
-            // User cancelled share — fall back to download
+          try { await navigator.share({ files: [file] }); } catch (err) {
             if (err.name !== "AbortError") {
               const a = document.createElement("a");
               a.href = URL.createObjectURL(lastSnapshotBlob);
@@ -557,7 +558,6 @@
             }
           }
         } else {
-          // Fallback: trigger download
           const a = document.createElement("a");
           a.href = URL.createObjectURL(lastSnapshotBlob);
           a.download = "emojify-snapshot.jpg";
@@ -567,19 +567,40 @@
 
       snapDismiss.addEventListener("click", dismissSnapshot);
 
-      async function loop() {
+      /*
+       * Performance-optimized render loop:
+       * - Uses requestAnimationFrame instead of setTimeout
+       * - Only one request in flight at a time (non-blocking pipeline)
+       * - Scales frame down client-side before sending (SEND_MAX_DIM)
+       * - Lower JPEG quality for transfer (0.55)
+       */
+      function loop() {
         if (!running || snapshotMode) return;
+        requestAnimationFrame(loop);
+
+        // Skip if a request is already in-flight
+        if (inflight) return;
+
+        const vw = cam.videoWidth || 640;
+        const vh = cam.videoHeight || 480;
+
+        // Scale down for sending — much smaller than raw camera
+        const scale = Math.min(1, SEND_MAX_DIM / Math.max(vw, vh));
+        const sw = Math.round(vw * scale);
+        const sh = Math.round(vh * scale);
+
+        cap.width = sw;
+        cap.height = sh;
+        const ctx = cap.getContext("2d");
+        ctx.drawImage(cam, 0, 0, sw, sh);
 
         const size = parseInt(sizeRange.value);
         const maxBlock = parseInt(blockRange.value);
 
-        cap.width = cam.videoWidth || 1280;
-        cap.height = cam.videoHeight || 720;
-        const ctx = cap.getContext("2d");
-        ctx.drawImage(cam, 0, 0);
+        inflight = true;
+        cap.toBlob((blob) => {
+          if (!blob || !running || snapshotMode) { inflight = false; return; }
 
-        try {
-          const blob = await new Promise(r => cap.toBlob(r, "image/jpeg", 0.82));
           const form = new FormData();
           form.append("frame", blob, "f.jpg");
           form.append("size", size);
@@ -587,25 +608,28 @@
           form.append("zoom", 4);
           form.append("bg", bgColor);
 
-          const res = await fetch("/process_frame", { method: "POST", body: form });
-          if (res.ok) {
-            const mBlob = await res.blob();
-            const url = URL.createObjectURL(mBlob);
-            const old = mosaic.src;
-            mosaic.src = url;
-            if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
+          fetch("/process_frame", { method: "POST", body: form })
+            .then(res => {
+              if (!res.ok) throw new Error();
+              return res.blob();
+            })
+            .then(mBlob => {
+              const url = URL.createObjectURL(mBlob);
+              const old = mosaic.src;
+              mosaic.src = url;
+              if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
 
-            frameCount++;
-            const now = performance.now();
-            if (now - lastFrame >= 1000) {
-              fpsEl.textContent = frameCount + " fps";
-              frameCount = 0;
-              lastFrame = now;
-            }
-          }
-        } catch (err) { /* skip */ }
-
-        if (running && !snapshotMode) loopId = setTimeout(loop, 30);
+              frameCount++;
+              const now = performance.now();
+              if (now - lastFpsTime >= 1000) {
+                fpsEl.textContent = frameCount + " fps";
+                frameCount = 0;
+                lastFpsTime = now;
+              }
+            })
+            .catch(() => {})
+            .finally(() => { inflight = false; });
+        }, "image/jpeg", 0.55);
       }
     </script>
   </body>

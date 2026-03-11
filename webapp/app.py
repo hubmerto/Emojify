@@ -325,12 +325,13 @@ def process_frame():
 
     pil_frame = Image.open(frame_file.stream).convert("RGB")
 
-    max_dim = 640
+    # Client already scales down; just clamp as safety net
+    max_dim = 480
     w, h = pil_frame.size
     if max(w, h) > max_dim:
         scale = max_dim / float(max(w, h))
         pil_frame = pil_frame.resize(
-            (int(w * scale), int(h * scale)), Image.LANCZOS
+            (int(w * scale), int(h * scale)), Image.BILINEAR
         )
 
     palette_colors, palette_images = get_palette()
@@ -344,7 +345,7 @@ def process_frame():
     )
 
     buffer = io.BytesIO()
-    mosaic.save(buffer, format="JPEG", quality=85)
+    mosaic.save(buffer, format="JPEG", quality=75)
     buffer.seek(0)
     return Response(buffer.getvalue(), mimetype="image/jpeg")
 
