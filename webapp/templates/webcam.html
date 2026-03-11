@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Emojify - Live Webcam</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap");
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg: #0a0a0a;
+        --panel: rgba(10,10,10,0.85);
+        --border: #222;
+        --text: #e0e0e0;
+        --text-dim: #555;
+        --font: "Space Grotesk", sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-weight: 300;
+        overflow: hidden;
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: none;
+        letter-spacing: 0.3px;
+      }
+
+      body.show-ui { cursor: default; }
+
+      /* Fullscreen mosaic output */
+      #mosaic {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #0a0a0a;
+        z-index: 0;
+      }
+
+      /* Hidden video + canvas for capture */
+      #cam, #cap { display: none; }
+
+      /* Floating control panel */
+      .panel {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--panel);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        padding: 14px 28px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+
+      body.show-ui .panel {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .panel label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: var(--text-dim);
+        letter-spacing: 0.7px;
+      }
+
+      .panel input[type="range"] {
+        width: 90px;
+        accent-color: var(--text);
+      }
+
+      .panel .val {
+        font-size: 13px;
+        font-weight: 400;
+        color: var(--text);
+        min-width: 20px;
+        text-align: center;
+      }
+
+      .btn {
+        font-family: var(--font);
+        font-size: 13px;
+        font-weight: 400;
+        letter-spacing: 0.7px;
+        padding: 8px 20px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn:hover {
+        border-color: var(--text);
+      }
+
+      .btn.active {
+        background: var(--text);
+        color: var(--bg);
+        border-color: var(--text);
+      }
+
+      /* Status overlay */
+      .status-overlay {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 14px;
+        color: var(--text-dim);
+        z-index: 5;
+        text-align: center;
+        pointer-events: none;
+        letter-spacing: 0.7px;
+      }
+
+      .status-overlay.hidden { display: none; }
+
+      /* FPS counter */
+      .fps {
+        position: fixed;
+        top: 14px;
+        right: 18px;
+        font-size: 12px;
+        color: var(--text-dim);
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.3s;
+        letter-spacing: 0.5px;
+      }
+
+      body.show-ui .fps { opacity: 1; }
+
+      /* Hint */
+      .hint {
+        position: fixed;
+        top: 14px;
+        left: 18px;
+        font-size: 12px;
+        color: var(--text-dim);
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.3s;
+        letter-spacing: 0.5px;
+      }
+
+      .hint a {
+        color: var(--text-dim);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .hint a:hover { color: var(--text); }
+
+      body.show-ui .hint { opacity: 1; }
+    </style>
+  </head>
+  <body>
+    <img id="mosaic" alt="" />
+    <video id="cam" autoplay playsinline></video>
+    <canvas id="cap"></canvas>
+
+    <div class="status-overlay" id="status">move mouse to show controls</div>
+
+    <div class="hint" id="hint"><b>F</b> fullscreen &middot; <b>Space</b> start/stop &middot; <a href="/">back</a></div>
+    <div class="fps" id="fps"></div>
+
+    <div class="panel" id="panel">
+      <button class="btn" id="startBtn">start</button>
+
+      <label>
+        <span>size</span>
+        <input type="range" id="sizeRange" min="4" max="32" value="12" />
+        <span class="val" id="sizeVal">12</span>
+      </label>
+
+      <label>
+        <span>block</span>
+        <input type="range" id="blockRange" min="1" max="16" value="1" />
+        <span class="val" id="blockVal">1</span>
+      </label>
+
+      <button class="btn" id="bgBtn" title="Toggle background color">bg: black</button>
+    </div>
+
+    <script>
+      const mosaic = document.getElementById("mosaic");
+      const cam = document.getElementById("cam");
+      const cap = document.getElementById("cap");
+      const startBtn = document.getElementById("startBtn");
+      const sizeRange = document.getElementById("sizeRange");
+      const sizeVal = document.getElementById("sizeVal");
+      const blockRange = document.getElementById("blockRange");
+      const blockVal = document.getElementById("blockVal");
+      const bgBtn = document.getElementById("bgBtn");
+      const statusEl = document.getElementById("status");
+      const fpsEl = document.getElementById("fps");
+
+      let bgColor = "black";
+      bgBtn.addEventListener("click", () => {
+        bgColor = bgColor === "black" ? "white" : "black";
+        bgBtn.textContent = "bg: " + bgColor;
+        mosaic.style.background = bgColor === "white" ? "#fff" : "#0a0a0a";
+      });
+
+      let running = false;
+      let stream = null;
+      let loopId = null;
+      let lastFrame = 0;
+      let frameCount = 0;
+      let uiTimeout = null;
+
+      sizeRange.addEventListener("input", () => sizeVal.textContent = sizeRange.value);
+      blockRange.addEventListener("input", () => blockVal.textContent = blockRange.value);
+
+      /* Show/hide UI on mouse move */
+      function showUI() {
+        document.body.classList.add("show-ui");
+        clearTimeout(uiTimeout);
+        uiTimeout = setTimeout(() => {
+          if (running) document.body.classList.remove("show-ui");
+        }, 3000);
+      }
+      document.addEventListener("mousemove", showUI);
+      document.addEventListener("click", showUI);
+
+      /* Keyboard shortcuts */
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "f" || e.key === "F") {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen();
+          }
+        }
+        if (e.key === " ") {
+          e.preventDefault();
+          toggleStream();
+        }
+      });
+
+      async function toggleStream() {
+        if (running) {
+          stopStream();
+        } else {
+          await startStream();
+        }
+      }
+
+      startBtn.addEventListener("click", toggleStream);
+
+      async function startStream() {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false,
+          });
+        } catch (err) {
+          statusEl.textContent = "camera access denied";
+          statusEl.classList.remove("hidden");
+          return;
+        }
+
+        cam.srcObject = stream;
+        await cam.play();
+
+        running = true;
+        startBtn.textContent = "stop";
+        startBtn.classList.add("active");
+        statusEl.classList.add("hidden");
+        lastFrame = performance.now();
+        frameCount = 0;
+        loop();
+      }
+
+      function stopStream() {
+        running = false;
+        if (loopId) { clearTimeout(loopId); loopId = null; }
+        if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+        cam.srcObject = null;
+        mosaic.removeAttribute("src");
+        startBtn.textContent = "start";
+        startBtn.classList.remove("active");
+        statusEl.textContent = "stopped";
+        statusEl.classList.remove("hidden");
+        fpsEl.textContent = "";
+      }
+
+      async function loop() {
+        if (!running) return;
+
+        const size = parseInt(sizeRange.value);
+        const maxBlock = parseInt(blockRange.value);
+
+        cap.width = cam.videoWidth || 1280;
+        cap.height = cam.videoHeight || 720;
+        const ctx = cap.getContext("2d");
+        ctx.drawImage(cam, 0, 0);
+
+        try {
+          const blob = await new Promise(r => cap.toBlob(r, "image/jpeg", 0.82));
+          const form = new FormData();
+          form.append("frame", blob, "f.jpg");
+          form.append("size", size);
+          form.append("max_block", maxBlock);
+          form.append("zoom", 4);
+          form.append("bg", bgColor);
+
+          const res = await fetch("/process_frame", { method: "POST", body: form });
+          if (res.ok) {
+            const mBlob = await res.blob();
+            const url = URL.createObjectURL(mBlob);
+            const old = mosaic.src;
+            mosaic.src = url;
+            if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
+
+            frameCount++;
+            const now = performance.now();
+            if (now - lastFrame >= 1000) {
+              fpsEl.textContent = frameCount + " fps";
+              frameCount = 0;
+              lastFrame = now;
+            }
+          }
+        } catch (err) { /* skip */ }
+
+        if (running) loopId = setTimeout(loop, 30);
+      }
+
+      /* Start with UI visible */
+      showUI();
+    </script>
+  </body>
+</html>

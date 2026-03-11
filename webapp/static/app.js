@@ -6,22 +6,17 @@ const fpsInput = document.getElementById("fps");
 const sizeInput = document.getElementById("size");
 const formatSelect = document.getElementById("format");
 const presetSelect = document.getElementById("preset");
-const queueList = document.getElementById("queue");
 const dropTitle = document.getElementById("drop-title");
 const dropSub = document.getElementById("drop-sub");
 const fpsControl = document.getElementById("fps-control");
 const presetControl = document.getElementById("preset-control");
-const liveToggleBtn = document.getElementById("live-toggle");
-const liveStatus = document.getElementById("live-status");
-const livePreview = document.getElementById("live-preview");
-const liveSizeInput = document.getElementById("live-size");
-const liveBlockInput = document.getElementById("live-block");
-
+const progressWrap = document.getElementById("progress-wrap");
+const progressBar = document.getElementById("progress-bar");
+const previewPlaceholder = document.getElementById("preview-placeholder");
+const previewContent = document.getElementById("preview-content");
+const previewActions = document.getElementById("preview-actions");
+const downloadLink = document.getElementById("download-link");
 let selectedFile = null;
-const jobs = [];
-let liveRunning = false;
-let liveStream = null;
-let liveLoopId = null;
 
 const presets = {
   custom: null,
@@ -32,6 +27,16 @@ const presets = {
 
 function setStatus(text) {
   statusEl.textContent = text;
+}
+
+function setProgress(pct) {
+  if (pct <= 0) {
+    progressWrap.style.display = "none";
+    progressBar.style.width = "0%";
+  } else {
+    progressWrap.style.display = "";
+    progressBar.style.width = pct + "%";
+  }
 }
 
 function setBusy(isBusy) {
@@ -72,6 +77,38 @@ function refreshFormForFile(file) {
   }
 }
 
+function showPreview(jobId, format, mediaKind) {
+  const url = `/preview/${jobId}`;
+  previewContent.innerHTML = "";
+
+  if (mediaKind === "image" || format === "gif") {
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "Mosaic preview";
+    previewContent.appendChild(img);
+  } else {
+    const video = document.createElement("video");
+    video.src = url;
+    video.controls = true;
+    video.autoplay = true;
+    video.loop = true;
+    video.muted = true;
+    previewContent.appendChild(video);
+  }
+
+  previewPlaceholder.style.display = "none";
+  previewContent.style.display = "flex";
+  previewActions.style.display = "flex";
+  downloadLink.href = `/download/${jobId}`;
+}
+
+function resetPreview() {
+  previewPlaceholder.style.display = "flex";
+  previewContent.style.display = "none";
+  previewActions.style.display = "none";
+  previewContent.innerHTML = "";
+}
+
 dropzone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropzone.classList.add("drag");
@@ -89,6 +126,7 @@ dropzone.addEventListener("drop", (e) => {
     selectedFile = file;
     refreshFormForFile(file);
     setStatus(`Selected: ${file.name}`);
+    resetPreview();
   }
 });
 
@@ -98,8 +136,12 @@ fileInput.addEventListener("change", (e) => {
     selectedFile = file;
     refreshFormForFile(file);
     setStatus(`Selected: ${file.name}`);
+    resetPreview();
   }
 });
+
+let currentJobFormat = "mp4";
+let currentMediaKindValue = "video";
 
 processBtn.addEventListener("click", async () => {
   if (!selectedFile) {
@@ -113,6 +155,8 @@ processBtn.addEventListener("click", async () => {
     return;
   }
 
+  currentMediaKindValue = kind;
+
   if (kind === "video") {
     const preset = presetSelect.value;
     if (preset !== "custom") {
@@ -122,6 +166,8 @@ processBtn.addEventListener("click", async () => {
     }
   }
 
+  currentJobFormat = formatSelect.value;
+
   const formData = new FormData();
   formData.append("media", selectedFile);
   formData.append("fps", fpsInput.value);
@@ -129,7 +175,9 @@ processBtn.addEventListener("click", async () => {
   formData.append("format", formatSelect.value);
 
   setBusy(true);
-  setStatus("Queued...");
+  setStatus("Processing...");
+  setProgress(5);
+  resetPreview();
 
   try {
     const response = await fetch("/process", { method: "POST", body: formData });
@@ -139,11 +187,10 @@ processBtn.addEventListener("click", async () => {
     }
 
     const { job_id } = await response.json();
-    addJob(job_id, selectedFile.name, formatSelect.value);
-    setStatus("Queued. You can add more files.");
+    pollJob(job_id);
   } catch (err) {
     setStatus(err.message || "Something went wrong.");
-  } finally {
+    setProgress(0);
     setBusy(false);
   }
 });
@@ -156,144 +203,38 @@ presetSelect.addEventListener("change", () => {
   sizeInput.value = values.size;
 });
 
-function addJob(id, name, format) {
-  const item = document.createElement("div");
-  item.className = "queue-item";
-  item.dataset.jobId = id;
-  item.innerHTML = `
-    <div class="queue-name">${name}</div>
-    <div class="queue-progress">
-      <div class="bar"><span></span></div>
-      <div class="label">Queued</div>
-    </div>
-    <button class="download" disabled>Download</button>
-  `;
-  queueList.prepend(item);
-  jobs.push({ id, element: item, format });
-  pollJob(id);
-}
-
 async function pollJob(id) {
-  const job = jobs.find((j) => j.id === id);
-  if (!job) return;
-  const label = job.element.querySelector(".label");
-  const bar = job.element.querySelector(".bar span");
-  const download = job.element.querySelector(".download");
-
   try {
     const res = await fetch(`/status/${id}`);
     if (!res.ok) throw new Error("status failed");
     const data = await res.json();
-    label.textContent = data.message || data.status;
-    bar.style.width = `${data.progress || 0}%`;
+
+    setStatus(data.message || data.status);
+    setProgress(data.progress || 0);
 
     if (data.status === "done") {
-      download.disabled = false;
-      download.addEventListener("click", () => {
-        window.location.href = `/download/${id}`;
-      });
+      setStatus("done");
+      setProgress(100);
+      showPreview(id, currentJobFormat, currentMediaKindValue);
+      setTimeout(() => {
+        setProgress(0);
+        setBusy(false);
+      }, 500);
       return;
     }
+
     if (data.status === "error") {
-      label.textContent = "Error";
+      setStatus("Error: " + (data.message || "Processing failed"));
+      setProgress(0);
+      setBusy(false);
       return;
     }
   } catch (err) {
-    label.textContent = "Error";
+    setStatus("Error checking status");
+    setProgress(0);
+    setBusy(false);
     return;
   }
 
-  setTimeout(() => pollJob(id), 2000);
-}
-
-function setLiveStatus(text) {
-  if (liveStatus) liveStatus.textContent = text;
-}
-
-const webcamVideo = document.getElementById("webcam-video");
-const captureCanvas = document.getElementById("capture-canvas");
-
-async function startLive() {
-  if (!liveToggleBtn || !livePreview || !liveSizeInput || !liveBlockInput) return;
-
-  try {
-    liveStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: false,
-    });
-  } catch (err) {
-    setLiveStatus("Camera access denied. Allow camera in your browser.");
-    return;
-  }
-
-  webcamVideo.srcObject = liveStream;
-  await webcamVideo.play();
-
-  liveRunning = true;
-  liveToggleBtn.textContent = "Stop Webcam";
-  setLiveStatus("Live stream running.");
-  liveLoop();
-}
-
-function stopLive() {
-  liveRunning = false;
-  if (liveLoopId) {
-    clearTimeout(liveLoopId);
-    liveLoopId = null;
-  }
-  if (liveStream) {
-    liveStream.getTracks().forEach((t) => t.stop());
-    liveStream = null;
-  }
-  if (webcamVideo) webcamVideo.srcObject = null;
-  if (livePreview) livePreview.removeAttribute("src");
-  if (liveToggleBtn) liveToggleBtn.textContent = "Start Webcam";
-}
-
-async function liveLoop() {
-  if (!liveRunning) return;
-
-  const size = Math.max(4, Math.min(48, parseInt(liveSizeInput.value || "12", 10)));
-  const maxBlock = Math.max(1, Math.min(20, parseInt(liveBlockInput.value || "8", 10)));
-
-  captureCanvas.width = webcamVideo.videoWidth || 640;
-  captureCanvas.height = webcamVideo.videoHeight || 480;
-  const ctx = captureCanvas.getContext("2d");
-  ctx.drawImage(webcamVideo, 0, 0);
-
-  try {
-    const blob = await new Promise((resolve) =>
-      captureCanvas.toBlob(resolve, "image/jpeg", 0.8)
-    );
-    const form = new FormData();
-    form.append("frame", blob, "frame.jpg");
-    form.append("size", size);
-    form.append("max_block", maxBlock);
-
-    const res = await fetch("/process_frame", { method: "POST", body: form });
-    if (res.ok) {
-      const mosaicBlob = await res.blob();
-      const url = URL.createObjectURL(mosaicBlob);
-      const oldSrc = livePreview.src;
-      livePreview.src = url;
-      if (oldSrc && oldSrc.startsWith("blob:")) URL.revokeObjectURL(oldSrc);
-    }
-  } catch (err) {
-    /* network hiccup, try next frame */
-  }
-
-  if (liveRunning) {
-    liveLoopId = setTimeout(liveLoop, 200);
-  }
-}
-
-if (liveToggleBtn) {
-  liveToggleBtn.addEventListener("click", () => {
-    if (liveRunning) {
-      stopLive();
-      setLiveStatus("Live stream stopped.");
-      return;
-    }
-    startLive();
-  });
+  setTimeout(() => pollJob(id), 1500);
 }

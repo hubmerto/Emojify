@@ -118,8 +118,6 @@ def run_job(job: Job):
                 str(job.input_path),
                 "--size",
                 str(job.size),
-                "--max-emoji-block",
-                "10",
                 "--out",
                 str(output_png),
             ],
@@ -147,8 +145,6 @@ def run_job(job: Job):
             str(job.fps),
             "--size",
             str(job.size),
-            "--max-emoji-block",
-            "10",
             "--out",
             str(output_mp4),
         ]
@@ -199,12 +195,13 @@ def run_job(job: Job):
     job.message = "Done"
 
 
-def get_palette_for_size(size: int):
+def get_palette():
+    """Return full-resolution emoji palette (cached)."""
     with palette_lock:
-        cached = palette_cache.get(size)
+        cached = palette_cache.get("full")
         if cached is None:
-            cached = build_emoji_palette(EMOJIS_DIR, size)
-            palette_cache[size] = cached
+            cached = build_emoji_palette(EMOJIS_DIR, 0)
+            palette_cache["full"] = cached
         return cached
 
 
@@ -225,6 +222,11 @@ threading.Thread(target=worker, daemon=True).start()
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/webcam")
+def webcam():
+    return render_template("webcam.html")
 
 
 @app.route("/process", methods=["POST"])
@@ -294,6 +296,22 @@ def download(job_id):
     return send_file(job.output_path, as_attachment=True, download_name=filename)
 
 
+@app.route("/preview/<job_id>")
+def preview(job_id):
+    job = jobs.get(job_id)
+    if not job or job.status != "done":
+        return jsonify({"error": "Not ready"}), 400
+    mime_map = {
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "gif": "image/gif",
+        "mp4": "video/mp4",
+    }
+    mimetype = mime_map.get(job.out_format, "application/octet-stream")
+    return send_file(job.output_path, mimetype=mimetype)
+
+
 @app.route("/process_frame", methods=["POST"])
 def process_frame():
     frame_file = request.files.get("frame")
@@ -301,7 +319,9 @@ def process_frame():
         return jsonify({"error": "No frame"}), 400
 
     size = clamp_int(request.form.get("size"), 4, 48, 12)
-    max_block = clamp_int(request.form.get("max_block"), 1, 20, 8)
+    zoom = clamp_int(request.form.get("zoom"), 1, 8, 4)
+    bg = request.form.get("bg", "black")
+    bg_color = (255, 255, 255) if bg == "white" else (0, 0, 0)
 
     pil_frame = Image.open(frame_file.stream).convert("RGB")
 
@@ -313,14 +333,14 @@ def process_frame():
             (int(w * scale), int(h * scale)), Image.LANCZOS
         )
 
-    palette_colors, palette_images = get_palette_for_size(size)
+    palette_colors, palette_images = get_palette()
     mosaic = mosaic_image(
         pil_frame,
         palette_colors,
         palette_images,
         size=size,
-        zoom=1,
-        max_emoji_block=max_block,
+        zoom=zoom,
+        bg_color=bg_color,
     )
 
     buffer = io.BytesIO()
@@ -330,4 +350,5 @@ def process_frame():
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5050, debug=False)
+    port = int(os.environ.get("PORT", 5050))
+    app.run(host="0.0.0.0", port=port, debug=False)

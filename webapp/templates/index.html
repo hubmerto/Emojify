@@ -7,50 +7,36 @@
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
-    <div class="desktop">
-      <div class="taskbar">
-        <button class="start-btn">Start</button>
-        <div class="taskbar-divider"></div>
-        <span class="taskbar-title">Emojify.exe</span>
-        <div class="taskbar-spacer"></div>
-        <span class="taskbar-clock" id="clock"></span>
-      </div>
-
-      <main class="window" id="main-window">
-        <div class="title-bar">
-          <div class="title-bar-text">Emojify.exe</div>
-          <div class="title-bar-controls">
-            <button class="title-btn minimize">_</button>
-            <button class="title-btn maximize">[]</button>
-            <button class="title-btn close">X</button>
+    <div class="app-wide">
+      <header class="app-header">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div>
+            <div class="app-title">Emojify</div>
+            <div class="app-subtitle">emoji mosaic generator</div>
           </div>
+          <nav style="display:flex;gap:16px">
+            <a href="/webcam" class="nav-link">webcam</a>
+          </nav>
         </div>
+      </header>
 
-        <div class="menu-bar">
-          <span class="menu-item">File</span>
-          <span class="menu-item">Edit</span>
-          <span class="menu-item">View</span>
-          <span class="menu-item">Help</span>
-        </div>
-
-        <div class="window-body">
-          <div class="group-box">
-            <div class="group-box-label">Select Media</div>
+      <div class="two-col">
+        <!-- Left: controls -->
+        <div class="col-left">
+          <div class="section">
+            <div class="section-label">media</div>
             <div id="dropzone" class="dropzone">
               <input id="file" type="file" accept="video/*,image/*" />
-              <div class="drop-content">
-                <span class="drop-icon">&#128193;</span>
-                <span class="drop-title" id="drop-title">Drop video here</span>
-                <span class="drop-sub" id="drop-sub">or click to browse...</span>
-              </div>
+              <span class="drop-title" id="drop-title">drop file here</span>
+              <span class="drop-sub" id="drop-sub">or click to browse</span>
             </div>
           </div>
 
-          <div class="group-box">
-            <div class="group-box-label">Options</div>
+          <div class="section">
+            <div class="section-label">options</div>
             <div class="controls">
               <label id="preset-control">
-                Preset:
+                preset
                 <select id="preset">
                   <option value="custom">Custom</option>
                   <option value="fast">Fast</option>
@@ -59,15 +45,15 @@
                 </select>
               </label>
               <label id="fps-control">
-                FPS:
+                fps
                 <input id="fps" type="number" min="1" max="30" value="8" />
               </label>
               <label>
-                Emoji size:
+                emoji size
                 <input id="size" type="number" min="4" max="48" value="12" />
               </label>
               <label>
-                Format:
+                format
                 <select id="format">
                   <option value="mp4">MP4</option>
                   <option value="gif">GIF</option>
@@ -77,60 +63,37 @@
           </div>
 
           <div class="button-row">
-            <button id="process" class="win-btn primary">Process</button>
+            <button id="process" class="btn primary">process</button>
           </div>
 
           <div class="status-bar">
-            <div id="status" class="status-text">Ready</div>
-          </div>
-
-          <div class="group-box">
-            <div class="group-box-label">Queue</div>
-            <div id="queue" class="queue-list"></div>
-          </div>
-
-          <div class="group-box">
-            <div class="group-box-label">Live Webcam Effect</div>
-            <p class="hint-text">Realtime local preview from your webcam.</p>
-            <div class="controls">
-              <label>
-                Emoji size:
-                <input id="live-size" type="number" min="4" max="48" value="12" />
-              </label>
-              <label>
-                Max block:
-                <input id="live-block" type="number" min="1" max="20" value="8" />
-              </label>
+            <div id="status" class="status-text">ready</div>
+            <div class="progress-wrap" id="progress-wrap" style="display:none">
+              <div class="bar"><span id="progress-bar"></span></div>
             </div>
-            <button id="live-toggle" class="win-btn">Start Webcam</button>
-            <div id="live-status" class="status-text"></div>
-            <video id="webcam-video" autoplay playsinline style="display:none"></video>
-            <canvas id="capture-canvas" style="display:none"></canvas>
-            <div class="live-preview-wrap">
-              <img id="live-preview" alt="Live webcam mosaic preview" />
-            </div>
-          </div>
-
-          <div class="footer-text">
-            Made by Humberto &middot;
-            <a href="https://hubmerto.com" target="_blank" rel="noreferrer">website</a>
           </div>
         </div>
-      </main>
+
+        <!-- Right: preview -->
+        <div class="col-right">
+          <div class="preview-panel" id="preview-panel">
+            <div class="preview-placeholder" id="preview-placeholder">
+              <span>preview will appear here</span>
+            </div>
+            <div class="preview-content" id="preview-content" style="display:none"></div>
+            <div class="preview-actions" id="preview-actions" style="display:none">
+              <a id="download-link" class="btn" download>download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-text">
+        made by humberto &middot;
+        <a href="https://hubmerto.com" target="_blank" rel="noreferrer">hubmerto.com</a>
+      </div>
     </div>
 
     <script src="/static/app.js"></script>
-    <script>
-      function updateClock() {
-        const now = new Date();
-        const h = now.getHours();
-        const m = String(now.getMinutes()).padStart(2, '0');
-        const ampm = h >= 12 ? 'PM' : 'AM';
-        const h12 = h % 12 || 12;
-        document.getElementById('clock').textContent = h12 + ':' + m + ' ' + ampm;
-      }
-      updateClock();
-      setInterval(updateClock, 30000);
-    </script>
   </body>
 </html>

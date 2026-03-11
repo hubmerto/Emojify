@@ -1,239 +1,110 @@
-/* === Windows 95 Theme for Emojify === */
+/* === Emojify — hubmerto.com-aligned theme === */
 
-@import url("https://fonts.googleapis.com/css2?family=VT323&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap");
 
 :root {
-  --win-bg: #008080;
-  --win-silver: #c0c0c0;
-  --win-dark: #808080;
-  --win-darker: #404040;
-  --win-white: #ffffff;
-  --win-black: #000000;
-  --win-title: #000080;
-  --win-title-text: #ffffff;
-  --win-field: #ffffff;
-  --win-field-text: #000000;
-  --win-highlight: #000080;
-  --win-highlight-text: #ffffff;
-  --font: "VT323", "MS Sans Serif", "Segoe UI", Tahoma, sans-serif;
+  --bg: #0a0a0a;
+  --surface: #111;
+  --border: #222;
+  --text: #e0e0e0;
+  --text-dim: #555;
+  --accent: #e0e0e0;
+  --accent-hover: #fff;
+  --font: "Space Grotesk", sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* --- Beveled border helpers --- */
-.outset {
-  border: 2px solid;
-  border-color: var(--win-white) var(--win-darker) var(--win-darker) var(--win-white);
-}
-
-.inset {
-  border: 2px solid;
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-}
-
-/* --- Desktop --- */
 body {
-  margin: 0;
   font-family: var(--font);
-  font-size: 16px;
-  background: var(--win-bg);
-  color: var(--win-black);
+  font-weight: 300;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-}
-
-.desktop {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-/* --- Taskbar --- */
-.taskbar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 36px;
-  background: var(--win-silver);
-  border-top: 2px solid var(--win-white);
-  display: flex;
-  align-items: center;
-  padding: 2px 4px;
-  gap: 4px;
-  z-index: 100;
-  font-family: var(--font);
-}
-
-.start-btn {
-  font-family: var(--font);
-  font-size: 16px;
-  font-weight: bold;
-  padding: 2px 8px;
-  height: 28px;
-  background: var(--win-silver);
-  border: 2px solid;
-  border-color: var(--win-white) var(--win-darker) var(--win-darker) var(--win-white);
-  cursor: pointer;
-}
-
-.start-btn:active {
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-}
-
-.taskbar-divider {
-  width: 2px;
-  height: 24px;
-  border-left: 1px solid var(--win-dark);
-  border-right: 1px solid var(--win-white);
-  margin: 0 2px;
-}
-
-.taskbar-title {
-  font-size: 15px;
-  background: var(--win-silver);
-  border: 2px solid;
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-  padding: 2px 12px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-}
-
-.taskbar-spacer {
-  flex: 1;
-}
-
-.taskbar-clock {
-  font-size: 15px;
-  border: 2px solid;
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-  padding: 2px 10px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-}
-
-/* --- Window --- */
-.window {
-  max-width: 680px;
-  width: 95%;
-  margin: 24px auto;
-  margin-bottom: 60px;
-  background: var(--win-silver);
-  border: 2px solid;
-  border-color: var(--win-white) var(--win-darker) var(--win-darker) var(--win-white);
-  box-shadow: 4px 4px 0px var(--win-black);
-}
-
-/* --- Title bar --- */
-.title-bar {
-  background: linear-gradient(90deg, var(--win-title), #1084d0);
-  color: var(--win-title-text);
-  padding: 3px 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  user-select: none;
-}
-
-.title-bar-text {
-  font-family: var(--font);
-  font-size: 17px;
-  font-weight: bold;
-  padding-left: 2px;
-}
-
-.title-bar-controls {
-  display: flex;
-  gap: 2px;
-}
-
-.title-btn {
-  font-family: var(--font);
-  font-size: 12px;
-  width: 20px;
-  height: 18px;
-  background: var(--win-silver);
-  border: 2px solid;
-  border-color: var(--win-white) var(--win-darker) var(--win-darker) var(--win-white);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 0;
-  line-height: 1;
+  letter-spacing: 0.3px;
 }
 
-.title-btn:active {
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
+/* --- Layouts --- */
+.app {
+  max-width: 520px;
+  width: 90%;
+  padding: 48px 0;
 }
 
-/* --- Menu bar --- */
-.menu-bar {
-  background: var(--win-silver);
-  padding: 2px 0;
-  border-bottom: 1px solid var(--win-dark);
-  display: flex;
-  gap: 0;
+.app-wide {
+  max-width: 960px;
+  width: 92%;
+  padding: 48px 0;
 }
 
-.menu-item {
-  font-family: var(--font);
-  font-size: 15px;
-  padding: 2px 10px;
-  cursor: default;
+.app-header {
+  margin-bottom: 40px;
 }
 
-.menu-item:hover {
-  background: var(--win-highlight);
-  color: var(--win-highlight-text);
+.app-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
 }
 
-/* --- Window body --- */
-.window-body {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.app-subtitle {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-weight: 300;
 }
 
-/* --- Group boxes (fieldset style) --- */
-.group-box {
-  border: 2px solid;
-  border-color: var(--win-dark) var(--win-white) var(--win-white) var(--win-dark);
-  padding: 14px 10px 10px;
-  position: relative;
-  margin-top: 6px;
+/* --- Two-column layout --- */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
 }
 
-.group-box-label {
-  position: absolute;
-  top: -10px;
-  left: 10px;
-  background: var(--win-silver);
-  padding: 0 4px;
-  font-size: 16px;
-  font-weight: bold;
+@media (max-width: 720px) {
+  .two-col {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
 }
 
-/* --- Drop zone --- */
+/* --- Sections --- */
+.section {
+  margin-bottom: 32px;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-dim);
+  text-transform: lowercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 10px;
+}
+
+/* --- Dropzone --- */
 .dropzone {
   position: relative;
-  background: var(--win-field);
-  border: 2px solid;
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-  padding: 24px 12px;
+  border: 1px solid var(--border);
+  padding: 36px 20px;
   text-align: center;
   cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.dropzone:hover {
+  border-color: #444;
 }
 
 .dropzone.drag {
-  background: #d0d0ff;
+  border-color: var(--accent);
 }
 
 .dropzone input {
@@ -243,241 +114,226 @@ body {
   cursor: pointer;
 }
 
-.drop-icon {
-  font-size: 32px;
-  display: block;
-  margin-bottom: 4px;
-}
-
 .drop-title {
   display: block;
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text);
 }
 
 .drop-sub {
-  color: var(--win-dark);
-  font-size: 15px;
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
 }
 
 /* --- Controls / form fields --- */
 .controls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-  margin: 8px 0;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
 .controls label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 15px;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
 }
 
 .controls input,
 .controls select {
   font-family: var(--font);
-  font-size: 16px;
-  background: var(--win-field);
-  color: var(--win-field-text);
-  border: 2px solid;
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-  padding: 3px 6px;
+  font-size: 14px;
+  font-weight: 300;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 10px;
   border-radius: 0;
   outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
 }
 
 .controls input:focus,
 .controls select:focus {
-  outline: 1px dotted var(--win-black);
-  outline-offset: -3px;
+  border-color: #444;
 }
 
 /* --- Buttons --- */
-.win-btn {
+.btn {
   font-family: var(--font);
-  font-size: 16px;
-  padding: 4px 24px;
-  background: var(--win-silver);
-  border: 2px solid;
-  border-color: var(--win-white) var(--win-darker) var(--win-darker) var(--win-white);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.7px;
+  padding: 10px 32px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
   cursor: pointer;
-  min-height: 28px;
+  transition: all 0.2s;
+  text-decoration: none;
+  text-align: center;
+  display: inline-block;
 }
 
-.win-btn:hover {
-  background: #d4d0c8;
+.btn:hover {
+  border-color: var(--accent);
+  color: var(--accent-hover);
 }
 
-.win-btn:active {
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
+.btn:active {
+  background: rgba(255,255,255,0.03);
 }
 
-.win-btn:disabled {
-  color: var(--win-dark);
+.btn:disabled {
+  color: var(--text-dim);
+  border-color: var(--border);
   cursor: not-allowed;
 }
 
-.win-btn.primary {
-  font-weight: bold;
-  outline: 1px solid var(--win-black);
-  outline-offset: -4px;
+.btn.primary {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.btn.primary:hover {
+  background: var(--accent-hover);
 }
 
 .button-row {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 12px;
 }
 
-/* --- Status bar --- */
+/* --- Status --- */
 .status-bar {
-  border: 2px solid;
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-  padding: 3px 8px;
-  background: var(--win-silver);
-  min-height: 24px;
+  padding: 8px 0;
+  min-height: 20px;
 }
 
 .status-text {
-  font-size: 15px;
-  color: var(--win-field-text);
-  min-height: 18px;
+  font-size: 12px;
+  color: var(--text-dim);
 }
 
-/* --- Queue --- */
-.queue-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* --- Progress bar --- */
+.progress-wrap {
+  margin-top: 8px;
 }
 
-.queue-item {
-  background: var(--win-field);
-  border: 2px solid;
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-  padding: 6px 8px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  align-items: center;
-}
-
-.queue-name {
-  font-weight: bold;
-  font-size: 15px;
-}
-
-.queue-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.queue-progress .bar {
-  background: var(--win-field);
-  border: 2px solid;
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-  height: 16px;
+.progress-wrap .bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  height: 3px;
   overflow: hidden;
 }
 
-.queue-progress .bar span {
+.progress-wrap .bar span {
   display: block;
   height: 100%;
   width: 0%;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--win-title) 0px,
-    var(--win-title) 8px,
-    transparent 8px,
-    transparent 10px
-  );
+  background: var(--text);
   transition: width 0.3s ease;
 }
 
-.queue-progress .label {
-  font-size: 13px;
-  color: var(--win-dark);
+/* --- Preview panel --- */
+.preview-panel {
+  border: 1px solid var(--border);
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 48px;
 }
 
-.queue-item .download {
-  font-family: var(--font);
-  font-size: 14px;
-  background: var(--win-silver);
-  border: 2px solid;
-  border-color: var(--win-white) var(--win-darker) var(--win-darker) var(--win-white);
-  padding: 3px 10px;
-  cursor: pointer;
+.preview-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--text-dim);
+  font-size: 12px;
+  letter-spacing: 0.7px;
 }
 
-.queue-item .download:active {
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-}
-
-.queue-item .download:disabled {
-  color: var(--win-dark);
-  cursor: not-allowed;
-}
-
-/* --- Live webcam --- */
-.hint-text {
-  font-size: 15px;
-  color: var(--win-dark);
-  margin: 0 0 4px;
-}
-
-.live-preview-wrap {
-  margin-top: 8px;
-  border: 2px solid;
-  border-color: var(--win-darker) var(--win-white) var(--win-white) var(--win-darker);
-  background: var(--win-black);
+.preview-content {
+  flex: 1;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
-.live-preview-wrap img {
+.preview-content img,
+.preview-content video {
+  max-width: 100%;
+  max-height: 480px;
   display: block;
-  width: 100%;
-  min-height: 180px;
   object-fit: contain;
+}
+
+.preview-actions {
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  border-top: 1px solid var(--border);
 }
 
 /* --- Footer --- */
 .footer-text {
-  font-size: 14px;
-  color: var(--win-dark);
+  font-size: 12px;
+  color: var(--text-dim);
   text-align: center;
-  padding: 4px 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  margin-top: 32px;
 }
 
 .footer-text a {
-  color: var(--win-title);
-  text-decoration: underline;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.2s;
 }
 
 .footer-text a:hover {
-  color: #0000ff;
+  color: var(--text);
 }
 
-/* --- Scrollbar (webkit) --- */
+/* --- Nav links --- */
+.nav-link {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-dim);
+  text-decoration: none;
+  letter-spacing: 0.7px;
+  transition: color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--text);
+}
+
+/* --- Scrollbar --- */
 ::-webkit-scrollbar {
-  width: 16px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: repeating-conic-gradient(var(--win-silver) 0% 25%, var(--win-field) 0% 50%) 50% / 2px 2px;
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--win-silver);
-  border: 2px solid;
-  border-color: var(--win-white) var(--win-darker) var(--win-darker) var(--win-white);
-}
-
-::-webkit-scrollbar-button {
-  background: var(--win-silver);
-  border: 2px solid;
-  border-color: var(--win-white) var(--win-darker) var(--win-darker) var(--win-white);
-  height: 16px;
+  background: #333;
+  border-radius: 3px;
 }
