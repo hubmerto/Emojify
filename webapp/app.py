@@ -224,9 +224,9 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/webcam")
-def webcam():
-    return render_template("webcam.html")
+@app.route("/camera")
+def camera():
+    return render_template("camera.html")
 
 
 @app.route("/process", methods=["POST"])

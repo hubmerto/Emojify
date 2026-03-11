@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Emojify - Camera</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap");
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg: #0a0a0a;
+        --surface: #111;
+        --panel: rgba(10,10,10,0.85);
+        --border: #222;
+        --text: #e0e0e0;
+        --text-dim: #555;
+        --font: "Space Grotesk", sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-weight: 300;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        letter-spacing: 0.3px;
+      }
+
+      /* --- Header --- */
+      .cam-header {
+        width: 92%;
+        max-width: 960px;
+        padding: 24px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+
+      .cam-title {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+      }
+
+      .cam-subtitle {
+        font-size: 13px;
+        color: var(--text-dim);
+        margin-top: 2px;
+        font-weight: 300;
+      }
+
+      .nav-link {
+        font-size: 13px;
+        font-weight: 300;
+        color: var(--text-dim);
+        text-decoration: none;
+        letter-spacing: 0.7px;
+        transition: color 0.2s;
+      }
+
+      .nav-link:hover { color: var(--text); }
+
+      /* --- Camera frame --- */
+      .camera-wrap {
+        width: 92%;
+        max-width: 720px;
+        margin-top: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .camera-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .camera-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .camera-frame .placeholder-text {
+        color: var(--text-dim);
+        font-size: 13px;
+        letter-spacing: 0.7px;
+      }
+
+      /* Recording dot */
+      .rec-dot {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #e04040;
+        display: none;
+        animation: pulse 1.2s ease-in-out infinite;
+        z-index: 2;
+      }
+
+      .rec-dot.active { display: block; }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+      }
+
+      /* FPS badge */
+      .fps-badge {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        font-size: 11px;
+        color: var(--text-dim);
+        letter-spacing: 0.5px;
+        z-index: 2;
+      }
+
+      /* Flash effect */
+      .flash {
+        position: absolute;
+        inset: 0;
+        background: #fff;
+        opacity: 0;
+        z-index: 5;
+        pointer-events: none;
+        transition: opacity 0.08s;
+      }
+
+      .flash.fire { opacity: 0.7; }
+
+      /* --- Controls bar --- */
+      .controls-bar {
+        width: 100%;
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        font-family: var(--font);
+        font-size: 13px;
+        font-weight: 400;
+        letter-spacing: 0.7px;
+        padding: 8px 20px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        text-align: center;
+        display: inline-block;
+      }
+
+      .btn:hover { border-color: var(--text); }
+
+      .btn.active {
+        background: var(--text);
+        color: var(--bg);
+        border-color: var(--text);
+      }
+
+      .btn:disabled {
+        color: var(--text-dim);
+        border-color: var(--border);
+        cursor: not-allowed;
+      }
+
+      /* Shutter button */
+      .shutter-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid var(--text);
+        background: transparent;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+
+      .shutter-btn::after {
+        content: "";
+        position: absolute;
+        inset: 4px;
+        border-radius: 50%;
+        background: var(--text);
+        transition: all 0.15s;
+      }
+
+      .shutter-btn:hover::after {
+        background: #fff;
+      }
+
+      .shutter-btn:active::after {
+        transform: scale(0.85);
+      }
+
+      .shutter-btn:disabled {
+        border-color: var(--text-dim);
+        cursor: not-allowed;
+      }
+
+      .shutter-btn:disabled::after {
+        background: var(--text-dim);
+      }
+
+      /* Slider controls */
+      .slider-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .slider-group .lbl {
+        font-size: 11px;
+        color: var(--text-dim);
+        letter-spacing: 0.7px;
+        min-width: 32px;
+      }
+
+      .slider-group input[type="range"] {
+        width: 80px;
+        accent-color: var(--text);
+      }
+
+      .slider-group .val {
+        font-size: 13px;
+        font-weight: 400;
+        min-width: 20px;
+        text-align: center;
+      }
+
+      /* Snapshot actions row */
+      .snapshot-actions {
+        width: 100%;
+        margin-top: 12px;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .snapshot-actions.hidden { display: none; }
+
+      /* --- Footer --- */
+      .cam-footer {
+        width: 92%;
+        max-width: 720px;
+        font-size: 12px;
+        color: var(--text-dim);
+        text-align: center;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+        margin-top: 32px;
+        padding-bottom: 24px;
+      }
+
+      .cam-footer a {
+        color: var(--text-dim);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .cam-footer a:hover { color: var(--text); }
+
+      /* Hidden elements */
+      #cam, #cap, #snapCap { display: none; }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: var(--bg); }
+      ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    </style>
+  </head>
+  <body>
+    <header class="cam-header">
+      <div>
+        <div class="cam-title">Emojify</div>
+        <div class="cam-subtitle">live camera</div>
+      </div>
+      <nav style="display:flex;gap:16px">
+        <a href="/" class="nav-link">upload</a>
+      </nav>
+    </header>
+
+    <div class="camera-wrap">
+      <!-- Camera viewport -->
+      <div class="camera-frame" id="cameraFrame">
+        <span class="placeholder-text" id="placeholderText">press start to begin</span>
+        <img id="mosaic" alt="" style="display:none" />
+        <div class="rec-dot" id="recDot"></div>
+        <span class="fps-badge" id="fps"></span>
+        <div class="flash" id="flash"></div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls-bar">
+        <button class="btn" id="startBtn">start</button>
+
+        <button class="shutter-btn" id="shutterBtn" title="Take picture (S)" disabled></button>
+
+        <div class="slider-group">
+          <span class="lbl">size</span>
+          <input type="range" id="sizeRange" min="4" max="32" value="12" />
+          <span class="val" id="sizeVal">12</span>
+        </div>
+
+        <div class="slider-group">
+          <span class="lbl">block</span>
+          <input type="range" id="blockRange" min="1" max="16" value="1" />
+          <span class="val" id="blockVal">1</span>
+        </div>
+
+        <button class="btn" id="bgBtn">bg: black</button>
+      </div>
+
+      <!-- Snapshot actions (hidden until a snapshot is taken) -->
+      <div class="snapshot-actions hidden" id="snapshotActions">
+        <a id="snapDownload" class="btn" download="emojify-snapshot.jpg">download snapshot</a>
+        <button class="btn" id="snapDismiss">resume</button>
+      </div>
+    </div>
+
+    <div class="cam-footer">
+      made by humberto &middot;
+      <a href="https://hubmerto.com" target="_blank" rel="noreferrer">hubmerto.com</a>
+    </div>
+
+    <!-- Hidden elements for capture -->
+    <video id="cam" autoplay playsinline></video>
+    <canvas id="cap"></canvas>
+    <canvas id="snapCap"></canvas>
+
+    <script>
+      const mosaic = document.getElementById("mosaic");
+      const cam = document.getElementById("cam");
+      const cap = document.getElementById("cap");
+      const snapCap = document.getElementById("snapCap");
+      const startBtn = document.getElementById("startBtn");
+      const shutterBtn = document.getElementById("shutterBtn");
+      const sizeRange = document.getElementById("sizeRange");
+      const sizeVal = document.getElementById("sizeVal");
+      const blockRange = document.getElementById("blockRange");
+      const blockVal = document.getElementById("blockVal");
+      const bgBtn = document.getElementById("bgBtn");
+      const fpsEl = document.getElementById("fps");
+      const recDot = document.getElementById("recDot");
+      const flash = document.getElementById("flash");
+      const placeholderText = document.getElementById("placeholderText");
+      const snapshotActions = document.getElementById("snapshotActions");
+      const snapDownload = document.getElementById("snapDownload");
+      const snapDismiss = document.getElementById("snapDismiss");
+
+      let bgColor = "black";
+      let running = false;
+      let stream = null;
+      let loopId = null;
+      let lastFrame = 0;
+      let frameCount = 0;
+      let snapshotMode = false;
+
+      sizeRange.addEventListener("input", () => sizeVal.textContent = sizeRange.value);
+      blockRange.addEventListener("input", () => blockVal.textContent = blockRange.value);
+
+      bgBtn.addEventListener("click", () => {
+        bgColor = bgColor === "black" ? "white" : "black";
+        bgBtn.textContent = "bg: " + bgColor;
+        mosaic.style.background = bgColor === "white" ? "#fff" : "transparent";
+      });
+
+      startBtn.addEventListener("click", toggleStream);
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === " ") {
+          e.preventDefault();
+          if (snapshotMode) {
+            dismissSnapshot();
+          } else {
+            toggleStream();
+          }
+        }
+        if ((e.key === "s" || e.key === "S") && running && !snapshotMode) {
+          takeSnapshot();
+        }
+        if (e.key === "f" || e.key === "F") {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen();
+          }
+        }
+      });
+
+      async function toggleStream() {
+        if (running) {
+          stopStream();
+        } else {
+          await startStream();
+        }
+      }
+
+      async function startStream() {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false,
+          });
+        } catch (err) {
+          placeholderText.textContent = "camera access denied";
+          return;
+        }
+
+        cam.srcObject = stream;
+        await cam.play();
+
+        running = true;
+        startBtn.textContent = "stop";
+        startBtn.classList.add("active");
+        shutterBtn.disabled = false;
+        placeholderText.style.display = "none";
+        mosaic.style.display = "";
+        recDot.classList.add("active");
+        lastFrame = performance.now();
+        frameCount = 0;
+        loop();
+      }
+
+      function stopStream() {
+        running = false;
+        snapshotMode = false;
+        if (loopId) { clearTimeout(loopId); loopId = null; }
+        if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+        cam.srcObject = null;
+        mosaic.style.display = "none";
+        mosaic.removeAttribute("src");
+        startBtn.textContent = "start";
+        startBtn.classList.remove("active");
+        shutterBtn.disabled = true;
+        recDot.classList.remove("active");
+        fpsEl.textContent = "";
+        snapshotActions.classList.add("hidden");
+        placeholderText.textContent = "press start to begin";
+        placeholderText.style.display = "";
+      }
+
+      function takeSnapshot() {
+        if (!mosaic.src || !mosaic.naturalWidth) return;
+
+        // Flash effect
+        flash.classList.add("fire");
+        setTimeout(() => flash.classList.remove("fire"), 120);
+
+        // Capture current mosaic frame to a canvas for download
+        snapCap.width = mosaic.naturalWidth;
+        snapCap.height = mosaic.naturalHeight;
+        const ctx = snapCap.getContext("2d");
+        ctx.drawImage(mosaic, 0, 0);
+
+        // Pause the live stream
+        snapshotMode = true;
+        if (loopId) { clearTimeout(loopId); loopId = null; }
+        recDot.classList.remove("active");
+
+        // Create download URL
+        snapCap.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          snapDownload.href = url;
+          snapshotActions.classList.remove("hidden");
+        }, "image/jpeg", 0.95);
+
+        startBtn.textContent = "resume";
+        shutterBtn.disabled = true;
+      }
+
+      function dismissSnapshot() {
+        snapshotMode = false;
+        snapshotActions.classList.add("hidden");
+        if (stream && stream.active) {
+          // Resume live
+          recDot.classList.add("active");
+          startBtn.textContent = "stop";
+          startBtn.classList.add("active");
+          shutterBtn.disabled = false;
+          loop();
+        } else {
+          stopStream();
+        }
+      }
+
+      shutterBtn.addEventListener("click", () => {
+        if (running && !snapshotMode) takeSnapshot();
+      });
+
+      snapDismiss.addEventListener("click", dismissSnapshot);
+
+      async function loop() {
+        if (!running || snapshotMode) return;
+
+        const size = parseInt(sizeRange.value);
+        const maxBlock = parseInt(blockRange.value);
+
+        cap.width = cam.videoWidth || 1280;
+        cap.height = cam.videoHeight || 720;
+        const ctx = cap.getContext("2d");
+        ctx.drawImage(cam, 0, 0);
+
+        try {
+          const blob = await new Promise(r => cap.toBlob(r, "image/jpeg", 0.82));
+          const form = new FormData();
+          form.append("frame", blob, "f.jpg");
+          form.append("size", size);
+          form.append("max_block", maxBlock);
+          form.append("zoom", 4);
+          form.append("bg", bgColor);
+
+          const res = await fetch("/process_frame", { method: "POST", body: form });
+          if (res.ok) {
+            const mBlob = await res.blob();
+            const url = URL.createObjectURL(mBlob);
+            const old = mosaic.src;
+            mosaic.src = url;
+            if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
+
+            frameCount++;
+            const now = performance.now();
+            if (now - lastFrame >= 1000) {
+              fpsEl.textContent = frameCount + " fps";
+              frameCount = 0;
+              lastFrame = now;
+            }
+          }
+        } catch (err) { /* skip */ }
+
+        if (running && !snapshotMode) loopId = setTimeout(loop, 30);
+      }
+    </script>
+  </body>
+</html>
