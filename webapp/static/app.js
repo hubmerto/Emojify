@@ -5,6 +5,7 @@ const statusEl = document.getElementById("status");
 const fpsInput = document.getElementById("fps");
 const sizeInput = document.getElementById("size");
 const formatSelect = document.getElementById("format");
+const scatterInput = document.getElementById("scatter");
 const presetSelect = document.getElementById("preset");
 const dropTitle = document.getElementById("drop-title");
 const dropSub = document.getElementById("drop-sub");
@@ -173,6 +174,10 @@ processBtn.addEventListener("click", async () => {
   formData.append("fps", fpsInput.value);
   formData.append("size", sizeInput.value);
   formData.append("format", formatSelect.value);
+  if (scatterInput && scatterInput.checked) {
+    formData.append("overlap", "0.35");
+    formData.append("jitter", "0.2");
+  }
 
   setBusy(true);
   setStatus("Processing...");

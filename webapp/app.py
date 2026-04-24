@@ -37,13 +37,15 @@ palette_lock = threading.Lock()
 
 
 class Job:
-    def __init__(self, input_path, fps, size, out_format, media_kind):
+    def __init__(self, input_path, fps, size, out_format, media_kind, overlap=0.0, jitter=0.0):
         self.id = uuid.uuid4().hex
         self.input_path = input_path
         self.fps = fps
         self.size = size
         self.out_format = out_format
         self.media_kind = media_kind
+        self.overlap = overlap
+        self.jitter = jitter
         self.status = "queued"
         self.progress = 0
         self.message = ""
@@ -118,6 +120,10 @@ def run_job(job: Job):
                 str(job.input_path),
                 "--size",
                 str(job.size),
+                "--overlap",
+                str(job.overlap),
+                "--jitter",
+                str(job.jitter),
                 "--out",
                 str(output_png),
             ],
@@ -241,6 +247,16 @@ def process():
     fps = clamp_int(request.form.get("fps"), 1, 30, 8)
     size = clamp_int(request.form.get("size"), 4, 48, 12)
 
+    def clamp_float(value, minimum, maximum, default):
+        try:
+            v = float(value)
+        except (TypeError, ValueError):
+            return default
+        return max(minimum, min(maximum, v))
+
+    overlap = clamp_float(request.form.get("overlap"), 0.0, 1.0, 0.0)
+    jitter = clamp_float(request.form.get("jitter"), 0.0, 0.5, 0.0)
+
     job_dir = JOBS_DIR / uuid.uuid4().hex
     job_dir.mkdir(parents=True, exist_ok=True)
     input_path = job_dir / media.filename
@@ -262,7 +278,7 @@ def process():
         if out_format not in ("png", "jpg", "jpeg"):
             return jsonify({"error": "Invalid format for image"}), 400
 
-    job = Job(str(input_path), fps, size, out_format, media_kind)
+    job = Job(str(input_path), fps, size, out_format, media_kind, overlap=overlap, jitter=jitter)
     jobs[job.id] = job
     job_queue.put(job)
 

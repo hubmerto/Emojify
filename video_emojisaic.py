@@ -2,6 +2,7 @@
 import argparse
 import math
 import os
+import random
 import shutil
 import subprocess
 from pathlib import Path
@@ -95,10 +96,35 @@ def _largest_uniform_square(grid, covered, row, col, emoji_index, max_side):
     return 1
 
 
-def mosaic_image(img: Image.Image, palette_colors, palette_images, size: int, zoom: int, bg_color: tuple = (0, 0, 0), max_emoji_block: int = 1):
+def mosaic_image(img: Image.Image, palette_colors, palette_images, size: int, zoom: int, bg_color: tuple = (0, 0, 0), max_emoji_block: int = 1, overlap: float = 0.0, size_jitter: float = 0.0, seed: int = 42):
     grid = build_emoji_grid(img, size, palette_colors)
     rows, cols = grid.shape
     tile_px = size * zoom
+
+    if overlap > 0.0 or size_jitter > 0.0:
+        # Scattered rendering: each emoji drawn larger than its cell and/or
+        # randomly resized, using alpha compositing so edges blend naturally.
+        canvas = Image.new("RGBA", (cols * tile_px, rows * tile_px), bg_color + (255,))
+        rng = random.Random(seed)
+        base_scale = 1.0 + max(0.0, min(overlap, 1.0))
+        jitter = max(0.0, min(size_jitter, 0.5))
+        _resize_cache = {}
+        for row in range(rows):
+            for col in range(cols):
+                emoji_index = int(grid[row, col])
+                scale = base_scale * (1.0 + rng.uniform(-jitter, jitter))
+                emoji_px = max(4, int(round(tile_px * scale)))
+                cache_key = (emoji_index, emoji_px)
+                em = _resize_cache.get(cache_key)
+                if em is None:
+                    src = palette_images[emoji_index]
+                    em = src if src.size[0] == emoji_px else src.resize((emoji_px, emoji_px), Image.LANCZOS)
+                    _resize_cache[cache_key] = em
+                cx = col * tile_px + tile_px // 2
+                cy = row * tile_px + tile_px // 2
+                canvas.alpha_composite(em, (cx - emoji_px // 2, cy - emoji_px // 2))
+        return canvas.convert("RGB")
+
     out = Image.new("RGB", (cols * tile_px, rows * tile_px), bg_color)
 
     _resize_cache = {}
@@ -154,7 +180,9 @@ def main():
     source.add_argument("--image")
     parser.add_argument("--fps", type=int, default=10)
     parser.add_argument("--size", type=int, default=8)
-    parser.add_argument("--zoom", type=int, default=1)
+    parser.add_argument("--zoom", type=int, default=0, help="Emoji render px = size*zoom. 0 = auto (4 for image, 1 for video).")
+    parser.add_argument("--overlap", type=float, default=0.0, help="0.0 = none, 0.3 = emojis drawn 30% larger than cell and overlap.")
+    parser.add_argument("--jitter", type=float, default=0.0, help="Per-emoji random size variation fraction, e.g. 0.15.")
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
 
@@ -165,21 +193,29 @@ def main():
         shutil.rmtree(tmp_dir)
     tmp_dir.mkdir(parents=True)
 
-    palette_colors, palette_images = build_emoji_palette(emojis_dir, args.size)
-
     if args.image:
+        zoom = args.zoom if args.zoom > 0 else 4
+        # Keep emojis at full resolution; they get resized per-tile so the
+        # output stays crisp regardless of --size.
+        palette_colors, palette_images = build_emoji_palette(emojis_dir, 0)
         image_path = Path(args.image).resolve()
         out_path = args.out or str(image_path.with_name(f"{image_path.stem}-mosaic.png"))
-        mosaic_frame(
-            image_path,
+        img = Image.open(image_path).convert("RGB")
+        mosaic = mosaic_image(
+            img,
             palette_colors,
             palette_images,
-            args.size,
-            args.zoom,
-            Path(out_path),
+            size=args.size,
+            zoom=zoom,
+            overlap=args.overlap,
+            size_jitter=args.jitter,
         )
+        mosaic.save(Path(out_path))
         print(f"Done: {out_path}")
         return
+
+    zoom = args.zoom if args.zoom > 0 else 1
+    palette_colors, palette_images = build_emoji_palette(emojis_dir, args.size)
 
     video_path = Path(args.video).resolve()
     base = video_path.stem
@@ -197,7 +233,7 @@ def main():
     for i, frame in enumerate(frames, start=1):
         print(f"Frame {i}/{total}")
         mosaic_out = tmp_dir / f"{frame.stem}-mosaic.png"
-        mosaic_frame(frame, palette_colors, palette_images, args.size, args.zoom, mosaic_out)
+        mosaic_frame(frame, palette_colors, palette_images, args.size, zoom, mosaic_out)
 
     out_path = args.out
     if out_path is None:
