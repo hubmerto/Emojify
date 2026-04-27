@@ -5,6 +5,11 @@ const statusEl = document.getElementById("status");
 const fpsInput = document.getElementById("fps");
 const sizeInput = document.getElementById("size");
 const formatSelect = document.getElementById("format");
+const scatterInput = document.getElementById("scatter");
+const noAdjacentInput = document.getElementById("no-adjacent");
+const maxUsesInput = document.getElementById("max-uses");
+const maxBlockInput = document.getElementById("max-block");
+const bgSelect = document.getElementById("bg");
 const presetSelect = document.getElementById("preset");
 const dropTitle = document.getElementById("drop-title");
 const dropSub = document.getElementById("drop-sub");
@@ -57,17 +62,28 @@ function currentMediaKind(file) {
 function refreshFormForFile(file) {
   const kind = currentMediaKind(file);
   if (kind === "image") {
-    dropTitle.textContent = "Drop image here";
-    dropSub.textContent = "or click to pick an image file";
+    if (file && file.name) {
+      dropTitle.textContent = file.name;
+      dropSub.textContent = "image — click to change";
+    } else {
+      dropTitle.textContent = "Drop image here";
+      dropSub.textContent = "or click to pick an image file";
+    }
     formatSelect.innerHTML = `
       <option value="png">PNG</option>
       <option value="jpg">JPG</option>
+      <option value="txt">TXT (ASCII)</option>
     `;
     fpsControl.style.display = "none";
     presetControl.style.display = "none";
   } else {
-    dropTitle.textContent = "Drop video here";
-    dropSub.textContent = "or click to pick a file";
+    if (file && file.name) {
+      dropTitle.textContent = file.name;
+      dropSub.textContent = "video — click to change";
+    } else {
+      dropTitle.textContent = "Drop video here";
+      dropSub.textContent = "or click to pick a file";
+    }
     formatSelect.innerHTML = `
       <option value="mp4">MP4</option>
       <option value="gif">GIF</option>
@@ -81,7 +97,19 @@ function showPreview(jobId, format, mediaKind) {
   const url = `/preview/${jobId}`;
   previewContent.innerHTML = "";
 
-  if (mediaKind === "image" || format === "gif") {
+  if (format === "txt") {
+    const pre = document.createElement("pre");
+    pre.style.margin = "0";
+    pre.style.fontFamily = "ui-monospace, Menlo, monospace";
+    pre.style.fontSize = "9px";
+    pre.style.lineHeight = "9px";
+    pre.style.whiteSpace = "pre";
+    pre.style.overflow = "auto";
+    pre.style.maxHeight = "480px";
+    pre.textContent = "loading...";
+    fetch(url).then((r) => r.text()).then((t) => { pre.textContent = t; });
+    previewContent.appendChild(pre);
+  } else if (mediaKind === "image" || format === "gif") {
     const img = document.createElement("img");
     img.src = url;
     img.alt = "Mosaic preview";
@@ -173,6 +201,14 @@ processBtn.addEventListener("click", async () => {
   formData.append("fps", fpsInput.value);
   formData.append("size", sizeInput.value);
   formData.append("format", formatSelect.value);
+  if (scatterInput && scatterInput.value === "yes") {
+    formData.append("overlap", "0.6");
+    formData.append("jitter", "0.35");
+  }
+  if (maxUsesInput && maxUsesInput.value) formData.append("max_uses", maxUsesInput.value);
+  if (maxBlockInput && maxBlockInput.value) formData.append("max_block", maxBlockInput.value);
+  if (bgSelect && bgSelect.value) formData.append("bg", bgSelect.value);
+  if (noAdjacentInput && noAdjacentInput.value === "yes") formData.append("no_adjacent", "1");
 
   setBusy(true);
   setStatus("Processing...");

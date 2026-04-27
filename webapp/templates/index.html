@@ -53,6 +53,37 @@
                 <input id="size" type="number" min="4" max="48" value="12" />
               </label>
               <label>
+                scatter (overlap + size variation)
+                <select id="scatter">
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </label>
+              <label>
+                spread (no same emoji next to itself)
+                <select id="no-adjacent">
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </label>
+              <label>
+                max uses per emoji
+                <input id="max-uses" type="number" min="0" max="10000" value="0" />
+              </label>
+              <label>
+                merge matching blocks up to
+                <input id="max-block" type="number" min="1" max="16" value="1" />
+              </label>
+              <label id="bg-control">
+                background
+                <select id="bg">
+                  <option value="black">Black</option>
+                  <option value="white">White</option>
+                  <option value="transparent">Transparent</option>
+                  <option value="image">Original image</option>
+                </select>
+              </label>
+              <label>
                 format
                 <select id="format">
                   <option value="mp4">MP4</option>
