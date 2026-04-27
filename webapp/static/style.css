@@ -36,9 +36,9 @@ body {
 }
 
 .app-wide {
-  max-width: 960px;
-  width: 92%;
-  padding: 48px 0;
+  max-width: none;
+  width: 100%;
+  padding: 48px 40px;
 }
 
 .app-header {
@@ -322,6 +322,14 @@ body {
 .nav-link:hover,
 .nav-link.active {
   color: var(--text);
+}
+
+/* --- Uniform control sizing --- */
+.controls input,
+.controls select {
+  height: 38px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* --- Scrollbar --- */

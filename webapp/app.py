@@ -37,7 +37,7 @@ palette_lock = threading.Lock()
 
 
 class Job:
-    def __init__(self, input_path, fps, size, out_format, media_kind, overlap=0.0, jitter=0.0):
+    def __init__(self, input_path, fps, size, out_format, media_kind, overlap=0.0, jitter=0.0, max_uses=0, max_block=1, bg="black", no_adjacent=False):
         self.id = uuid.uuid4().hex
         self.input_path = input_path
         self.fps = fps
@@ -46,6 +46,10 @@ class Job:
         self.media_kind = media_kind
         self.overlap = overlap
         self.jitter = jitter
+        self.max_uses = max_uses
+        self.max_block = max_block
+        self.bg = bg
+        self.no_adjacent = no_adjacent
         self.status = "queued"
         self.progress = 0
         self.message = ""
@@ -112,31 +116,38 @@ def run_job(job: Job):
     job.progress = 30
     job.message = "Rendering mosaic..."
     if job.media_kind == "image":
-        result = subprocess.run(
-            [
-                os.fspath(Path(sys.executable)),
-                str(SCRIPT),
-                "--image",
-                str(job.input_path),
-                "--size",
-                str(job.size),
-                "--overlap",
-                str(job.overlap),
-                "--jitter",
-                str(job.jitter),
-                "--out",
-                str(output_png),
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
+        output_txt = Path(job.input_path).with_name("output.txt")
+        cmd = [
+            os.fspath(Path(sys.executable)),
+            str(SCRIPT),
+            "--image",
+            str(job.input_path),
+            "--size",
+            str(job.size),
+            "--overlap",
+            str(job.overlap),
+            "--jitter",
+            str(job.jitter),
+            "--max-uses",
+            str(job.max_uses),
+            "--max-block",
+            str(job.max_block),
+        ]
+        if job.no_adjacent:
+            cmd.append("--no-adjacent")
+        if job.out_format == "txt":
+            cmd += ["--ascii", "--out", str(output_txt)]
+        else:
+            cmd += ["--bg", job.bg, "--out", str(output_png)]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if result.returncode != 0:
             job.status = "error"
             job.message = "Image processing failed"
             return
         job.progress = 85
-        if job.out_format in ("jpg", "jpeg"):
+        if job.out_format == "txt":
+            job.output_path = str(output_txt)
+        elif job.out_format in ("jpg", "jpeg"):
             Image.open(output_png).convert("RGB").save(output_jpg, "JPEG", quality=95)
             job.output_path = str(output_jpg)
         else:
@@ -256,6 +267,12 @@ def process():
 
     overlap = clamp_float(request.form.get("overlap"), 0.0, 1.0, 0.0)
     jitter = clamp_float(request.form.get("jitter"), 0.0, 0.5, 0.0)
+    max_uses = clamp_int(request.form.get("max_uses"), 0, 10000, 0)
+    max_block = clamp_int(request.form.get("max_block"), 1, 16, 1)
+    no_adjacent = request.form.get("no_adjacent") in ("1", "true", "on", "yes")
+    bg = request.form.get("bg", "black").lower()
+    if bg not in ("black", "white", "transparent", "image"):
+        bg = "black"
 
     job_dir = JOBS_DIR / uuid.uuid4().hex
     job_dir.mkdir(parents=True, exist_ok=True)
@@ -275,10 +292,10 @@ def process():
             return jsonify({"error": "Video must be 15 seconds or less"}), 400
     else:
         out_format = request.form.get("format", "png").lower()
-        if out_format not in ("png", "jpg", "jpeg"):
+        if out_format not in ("png", "jpg", "jpeg", "txt"):
             return jsonify({"error": "Invalid format for image"}), 400
 
-    job = Job(str(input_path), fps, size, out_format, media_kind, overlap=overlap, jitter=jitter)
+    job = Job(str(input_path), fps, size, out_format, media_kind, overlap=overlap, jitter=jitter, max_uses=max_uses, max_block=max_block, bg=bg, no_adjacent=no_adjacent)
     jobs[job.id] = job
     job_queue.put(job)
 
@@ -305,7 +322,12 @@ def download(job_id):
     if not job or job.status != "done":
         return jsonify({"error": "Not ready"}), 400
     if job.media_kind == "image":
-        ext = "jpg" if job.out_format in ("jpg", "jpeg") else "png"
+        if job.out_format == "txt":
+            ext = "txt"
+        elif job.out_format in ("jpg", "jpeg"):
+            ext = "jpg"
+        else:
+            ext = "png"
         filename = f"emojisaic.{ext}"
     else:
         filename = "emojisaic.gif" if job.out_format == "gif" else "emojisaic.mp4"
@@ -323,6 +345,7 @@ def preview(job_id):
         "jpeg": "image/jpeg",
         "gif": "image/gif",
         "mp4": "video/mp4",
+        "txt": "text/plain; charset=utf-8",
     }
     mimetype = mime_map.get(job.out_format, "application/octet-stream")
     return send_file(job.output_path, mimetype=mimetype)
