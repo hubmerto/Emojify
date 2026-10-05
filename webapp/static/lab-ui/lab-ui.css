@@ -882,3 +882,6 @@ html.lab-root, html.lab-root body { height: 100%; }
 .lab-tools2 .lab-widget > .lab-in, .lab-docbar .lab-widget > .lab-in, .lab-docfoot .lab-widget > .lab-in { display: none; }
 .lab-tools2 .lab-select select, .lab-docfoot .lab-select select { text-align: left; text-align-last: left; padding-left: 7px; }
 .lab-tools2 .lab-num .lab-val { padding-left: 5px; }
+
+/* no hint line under the canvas; shortcuts belong in the menus */
+.lab-hint { display: none; }
