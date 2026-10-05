@@ -602,6 +602,9 @@
   // ---------------------------------------------------------------- tool strip
   // groups: [[item, item], [item], ...] with item = { icon, title, text, tip, kbd, id, onClick, click:'#id',
   //   primary, rec, toggle } | { sep:true } | { spacer:true } | { label:'text' } | { el: node }
+  const ICON_FAMILY = { folder:'amber', webcam:'amber', monitor:'amber', testcard:'amber', sample:'amber', camera:'amber', plus:'amber', image:'sky', save:'sky', download:'sky', gif:'sky', export:'sky',
+    play:'green', pause:'green', restart:'green', bolt:'green', front:'cyan', reset:'cyan', fly:'cyan', fit:'cyan', eye:'cyan', ratio:'cyan',
+    layers:'violet', grid:'violet', build:'violet', dice:'violet', text:'violet', audio:'pink', mic:'pink', undo:'red', deselect:'red', record:'red', film:'sky', link:'sky', menu:'sky' };
   function toolbar(container, groups) {
     container.textContent = '';
     const tools = {};
@@ -610,7 +613,8 @@
       if (it.spacer) { into.appendChild(el('span', 'lab-spacer')); return; }
       if (it.label) { into.appendChild(el('span', 'lab-tlabel', it.label)); return; }
       if (it.el) { into.appendChild(it.el); return; }
-      const b = el('button', 'lab-tool' + (it.primary ? ' lab-primary' : '') + (it.rec ? ' lab-rec' : '') + (it.cls ? ' ' + it.cls : ''));
+      const fam = it.c || (it.icon && ICON_FAMILY[it.icon]);
+      const b = el('button', 'lab-tool' + (it.primary ? ' lab-primary' : '') + (it.rec ? ' lab-rec' : '') + (it.cls ? ' ' + it.cls : '') + (fam && !it.primary ? ' lab-c-' + fam : ''));
       b.type = 'button';
       if (it.icon) b.appendChild(icon(it.icon));
       if (it.text) b.appendChild(el('span', 'lab-tool-text', it.text));
@@ -700,7 +704,8 @@
             c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr);
             const ctx = c.getContext('2d'); ctx.scale(dpr, dpr);
             ctx.clearRect(0, 0, r.width, r.height);
-            ctx.strokeStyle = '#55555d'; ctx.fillStyle = '#2a2a30'; ctx.font = '8px Monaco, Menlo, monospace';
+            if (opts.select) { ctx.fillStyle = 'rgba(47,95,209,.75)'; ctx.fillRect(opts.select[0], 0, Math.max(1, opts.select[1] - opts.select[0]), r.height); }
+            ctx.strokeStyle = 'rgba(190,200,230,.55)'; ctx.fillStyle = '#d4dbf0'; ctx.font = '8px Monaco, Menlo, monospace';
             const unit = opts.unit || 50, origin = opts.origin || 0;
             for (let x = 0; x <= r.width; x += unit / 5) {
               const major = Math.round(x / unit) * unit === Math.round(x) || Math.abs((x % unit)) < 0.01;
