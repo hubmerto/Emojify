@@ -490,6 +490,149 @@
     set expanded(v) {}
   }
 
+
+  // ---------------------------------------------------------------- icons (24-grid line set)
+  const ICONS = {
+    folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    image: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 16-5-5-8 8"/>',
+    webcam: '<circle cx="12" cy="10" r="5"/><circle cx="12" cy="10" r="1.6"/><path d="M8 20h8M12 15v5"/>',
+    monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+    grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+    testcard: '<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 12h18M9 4v16M15 4v16"/>',
+    play: '<path d="M7 5v14l11-7z"/>',
+    pause: '<path d="M8 5v14M16 5v14"/>',
+    restart: '<path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/>',
+    record: '<circle cx="12" cy="12" r="8"/><circle class="lab-rec-dot" cx="12" cy="12" r="4"/>',
+    film: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>',
+    export: '<path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
+    download: '<path d="M12 4v11M7 10l5 5 5-5"/><path d="M4 17v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1"/>',
+    save: '<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-6h8v6"/>',
+    front: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+    reset: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>',
+    fly: '<path d="M4 18c4 0 4-12 8-12s4 12 8 12"/><circle cx="4" cy="18" r="1.5"/><circle cx="20" cy="18" r="1.5"/>',
+    audio: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>',
+    dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="8.5" cy="8.5" r="1.2"/><circle cx="15.5" cy="8.5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="8.5" cy="15.5" r="1.2"/><circle cx="15.5" cy="15.5" r="1.2"/>',
+    build: '<path d="M4 20h16M6 20V9l6-5 6 5v11"/><path d="M10 20v-5h4v5"/>',
+    gif: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 10v4M11 10h2.5v4H11zM16 14v-4h2"/>',
+    deselect: '<path d="M6 6l12 12M18 6 6 18"/>',
+    undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+    text: '<path d="M5 6h14M12 6v13M9 19h6"/>',
+    bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+    camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+    sample: '<path d="M4 9h16v11H4zM4 9l2-5h12l2 5M8 4l2 5M14 4l2 5"/>',
+    fit: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
+    ratio: '<rect x="3" y="6" width="18" height="12" rx="1"/><path d="M8 6v12M16 6v12"/>',
+    layers: '<path d="m12 4 8 4-8 4-8-4z"/><path d="m4 12 8 4 8-4M4 16l8 4 8-4"/>',
+    eye: '<path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  };
+  function icon(name) {
+    const svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
+    svg.innerHTML = ICONS[name] || ICONS.grid;
+    return svg;
+  }
+
+  // ---------------------------------------------------------------- tooltips
+  let tipEl = null, tipTimer = null;
+  function bindTip(btn, text, kbd) {
+    if (!text) return;
+    btn.setAttribute('aria-label', text);
+    btn.addEventListener('pointerenter', () => {
+      clearTimeout(tipTimer);
+      tipTimer = setTimeout(() => {
+        if (!tipEl) { tipEl = el('div', 'lab-tool-tip'); doc.body.appendChild(tipEl); }
+        tipEl.textContent = text;
+        if (kbd) tipEl.appendChild(el('span', 'lab-kbd', kbd));
+        const r = btn.getBoundingClientRect();
+        tipEl.style.left = Math.max(6, Math.min(r.left, global.innerWidth - 240)) + 'px';
+        tipEl.style.top = (r.bottom + 6) + 'px';
+        tipEl.hidden = false;
+      }, 450);
+    });
+    const hide = () => { clearTimeout(tipTimer); if (tipEl) tipEl.hidden = true; };
+    btn.addEventListener('pointerleave', hide); btn.addEventListener('pointerdown', hide);
+  }
+
+  // click: '#id' delegates to another element (keeps the tool's own ids in one place)
+  function wireClick(btn, it) {
+    if (it.onClick) btn.addEventListener('click', it.onClick);
+    if (it.click) btn.addEventListener('click', () => { const t = doc.querySelector(it.click); if (t) t.click(); });
+    if (it.toggleOf) btn.addEventListener('click', () => { const t = doc.querySelector(it.toggleOf); if (t) t.click(); });
+  }
+
+  // ---------------------------------------------------------------- menu bar with dropdowns
+  // menus: [{ title, items: [{ title, icon, kbd, onClick, click:'#id', id, disabled } | { sep:true } | { head:'text' }] }]
+  function menubar(container, menus) {
+    let openItem = null;
+    const closeAll = () => { if (openItem) { openItem.dd.hidden = true; openItem.btn.classList.remove('open'); openItem = null; } };
+    doc.addEventListener('pointerdown', (e) => { if (openItem && !e.target.closest('.lab-menu-item')) closeAll(); });
+    doc.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
+    const built = [];
+    (menus || []).forEach((m) => {
+      const wrap = el('div', 'lab-menu-item');
+      const btn = el('button', null, m.title); btn.type = 'button';
+      if (m.id) btn.id = m.id;
+      const dd = el('div', 'lab-dropdown'); dd.hidden = true;
+      (m.items || []).forEach((it) => {
+        if (it.sep) { dd.appendChild(el('hr')); return; }
+        if (it.head) { dd.appendChild(el('div', 'lab-dd-head', it.head)); return; }
+        const b = el('button'); b.type = 'button';
+        if (it.icon) b.appendChild(icon(it.icon));
+        b.appendChild(el('span', null, it.title));
+        if (it.kbd) b.appendChild(el('span', 'lab-kbd', it.kbd));
+        if (it.id) b.id = it.id;
+        if (it.disabled) b.disabled = true;
+        wireClick(b, it);
+        b.addEventListener('click', closeAll);
+        dd.appendChild(b);
+      });
+      const item = { btn, dd, menu: m };
+      btn.addEventListener('pointerdown', (e) => { e.preventDefault(); if (openItem === item) { closeAll(); return; } closeAll(); dd.hidden = false; btn.classList.add('open'); openItem = item; });
+      btn.addEventListener('pointerenter', () => { if (openItem && openItem !== item) { closeAll(); dd.hidden = false; btn.classList.add('open'); openItem = item; } });
+      if (!m.items || !m.items.length) { wireClick(btn, m); }
+      wrap.append(btn, dd); container.appendChild(wrap); built.push(item);
+    });
+    return built;
+  }
+
+  // ---------------------------------------------------------------- tool strip
+  // groups: [[item, item], [item], ...] with item = { icon, title, text, tip, kbd, id, onClick, click:'#id',
+  //   primary, rec, toggle } | { sep:true } | { spacer:true } | { label:'text' } | { el: node }
+  function toolbar(container, groups) {
+    container.textContent = '';
+    const tools = {};
+    const addItem = (it, into) => {
+      if (it.sep) { into.appendChild(el('span', 'lab-tsep')); return; }
+      if (it.spacer) { into.appendChild(el('span', 'lab-spacer')); return; }
+      if (it.label) { into.appendChild(el('span', 'lab-tlabel', it.label)); return; }
+      if (it.el) { into.appendChild(it.el); return; }
+      const b = el('button', 'lab-tool' + (it.primary ? ' lab-primary' : '') + (it.rec ? ' lab-rec' : '') + (it.cls ? ' ' + it.cls : ''));
+      b.type = 'button';
+      if (it.icon) b.appendChild(icon(it.icon));
+      if (it.text) b.appendChild(el('span', 'lab-tool-text', it.text));
+      if (it.id) b.id = it.id;
+      if (it.disabled) b.disabled = true;
+      bindTip(b, it.tip || it.title, it.kbd);
+      wireClick(b, it);
+      if (it.toggle) b.addEventListener('click', () => { const on = !b.classList.contains('on'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); if (it.onToggle) it.onToggle(on, b); });
+      if (it.key) tools[it.key] = b;
+      into.appendChild(b);
+    };
+    (groups || []).forEach((g, gi) => {
+      if (!Array.isArray(g)) { addItem(g, container); return; }
+      const grp = el('div', 'lab-tgroup');
+      g.forEach((it) => addItem(it, grp));
+      container.appendChild(grp);
+      const next = groups[gi + 1];
+      if (next && Array.isArray(next)) container.appendChild(el('span', 'lab-tsep'));
+    });
+    return tools;
+  }
+
   // ---------------------------------------------------------------- shell
   // shell({ root, title, subtitle, side:'right'|'left', wide, view:HTMLElement|null, menu:[{title,onClick}] })
   // Returns { shell, top, toolbar, side, sideHead, view, status, setStatus(items) }
@@ -505,28 +648,83 @@
     if (o.subtitle) brand.appendChild(el('span', null, o.subtitle));
     top.appendChild(brand);
     const menu = el('nav', 'lab-menu');
-    (o.menu || []).forEach((m) => { const b = el('button', null, m.title); b.type = 'button'; if (m.onClick) b.addEventListener('click', m.onClick); if (m.id) b.id = m.id; menu.appendChild(b); });
+    menubar(menu, o.menus || o.menu || []);
     top.appendChild(menu);
+    const tools = el('div', 'lab-tools');
+    const toolRefs = toolbar(tools, o.tools || []);
+    const tools2 = el('div', 'lab-tools2');
+    if (o.tools2) Object.assign(toolRefs, toolbar(tools2, o.tools2)); else s.classList.add('lab-no-tools2');
+    const rail = el('div', 'lab-rail');
+    if (o.rail) Object.assign(toolRefs, toolbar(rail, o.rail)); else s.classList.add('lab-no-rail');
     top.appendChild(el('div', 'lab-spacer'));
-    const toolbar = el('div', 'lab-toolbar');
-    top.appendChild(toolbar);
+    const tbar = el('div', 'lab-toolbar');
+    top.appendChild(tbar);
     const view = el('main', 'lab-view');
     if (o.view) view.appendChild(o.view);
     const side = el('aside', 'lab-side');
     const sideHead = el('div', 'lab-side-head');
     if (o.sideHead !== false) side.appendChild(sideHead);
     const status = el('footer', 'lab-status');
-    s.append(top, view, side, status);
+    s.append(top, tools, tools2, rail, view, side, status);
     root.appendChild(s);
     const api = {
-      shell: s, top, brand, menu, toolbar, view, side, sideHead, status,
+      shell: s, top, brand, menu, toolbar: tbar, tools, tools2, rail, tool: toolRefs, view, side, sideHead, status,
+      setTools2(groups) { s.classList.remove('lab-no-tools2'); Object.assign(toolRefs, LabUI.toolbar(tools2, groups)); return toolRefs; },
+      setRail(groups) { s.classList.remove('lab-no-rail'); Object.assign(toolRefs, LabUI.toolbar(rail, groups)); return toolRefs; },
+      // document window chrome inside the viewport: title bar with lights, optional field bar, optional ruler
+      doc(opts) {
+        opts = opts || {};
+        view.classList.add('lab-has-doc');
+        let bar = view.querySelector('.lab-doc');
+        if (!bar) {
+          bar = el('div', 'lab-doc');
+          const lights = el('span', 'lab-lights'); lights.append(el('i'), el('i'), el('i'));
+          bar.append(lights, el('span', 'lab-doc-title'), el('span', 'lab-doc-right'));
+          view.appendChild(bar);
+        }
+        if (opts.title != null) bar.querySelector('.lab-doc-title').textContent = opts.title;
+        if (opts.right != null) bar.querySelector('.lab-doc-right').textContent = opts.right;
+        let field = view.querySelector('.lab-docbar');
+        if (opts.bar) {
+          if (!field) { field = el('div', 'lab-docbar'); view.appendChild(field); view.classList.add('lab-has-docbar'); }
+          field.textContent = '';
+          toolbar(field, opts.bar);
+        }
+        let ruler = view.querySelector('.lab-ruler');
+        if (opts.ruler !== false) {
+          if (!ruler) { ruler = el('div', 'lab-ruler'); ruler.appendChild(el('canvas')); view.appendChild(ruler); }
+          ruler.style.top = field ? '42px' : '20px';
+          const draw = () => {
+            const c = ruler.firstChild, r = ruler.getBoundingClientRect();
+            const dpr = Math.min(2, global.devicePixelRatio || 1);
+            c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr);
+            const ctx = c.getContext('2d'); ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, r.width, r.height);
+            ctx.strokeStyle = '#55555d'; ctx.fillStyle = '#2a2a30'; ctx.font = '8px Monaco, Menlo, monospace';
+            const unit = opts.unit || 50, origin = opts.origin || 0;
+            for (let x = 0; x <= r.width; x += unit / 5) {
+              const major = Math.round(x / unit) * unit === Math.round(x) || Math.abs((x % unit)) < 0.01;
+              const h = major ? r.height : (Math.abs((x % (unit / 2))) < 0.01 ? r.height * .55 : r.height * .3);
+              ctx.beginPath(); ctx.moveTo(x + .5, r.height); ctx.lineTo(x + .5, r.height - h); ctx.stroke();
+              if (major && x > 0) ctx.fillText(String(Math.round(origin + x)), x + 2, 8);
+            }
+            if (opts.marker != null) { ctx.fillStyle = '#e8321f'; ctx.fillRect(opts.marker - 1, 0, 3, r.height); }
+          };
+          draw();
+          if (!ruler._ro) { ruler._ro = new ResizeObserver(draw); ruler._ro.observe(ruler); }
+          ruler._draw = draw;
+        }
+        return { bar, field, ruler, setTitle: (t) => { bar.querySelector('.lab-doc-title').textContent = t; }, setRight: (t) => { bar.querySelector('.lab-doc-right').textContent = t; } };
+      },
+      setTools(groups) { Object.assign(toolRefs, LabUI.toolbar(tools, groups)); return toolRefs; },
+      setMenus(menus) { menu.textContent = ''; menubar(menu, menus); },
       // setStatus([{text, bold, dot:'ok'|'rec'|'warn', spacer}]) or a string
       setStatus(items) {
         status.textContent = '';
         if (typeof items === 'string') items = [{ text: items }];
         (items || []).forEach((it) => {
           if (it.spacer) { status.appendChild(el('span', 'lab-spacer')); return; }
-          const span = el('span');
+          const span = el('span', it.cell ? 'lab-cell' : null);
           if (it.dot) span.appendChild(el('i', 'lab-dot ' + it.dot));
           if (it.bold) { span.appendChild(el('b', null, it.bold)); if (it.text) span.appendChild(doc.createTextNode(' ' + it.text)); }
           else span.appendChild(doc.createTextNode(it.text || ''));
@@ -555,7 +753,7 @@
       toolbarButton(o2) {
         const b = el('button', 'lab-btn' + (o2.accent ? ' lab-accent' : '') + (o2.danger ? ' lab-danger' : '') + (o2.rec ? ' lab-rec' : ''), o2.title);
         b.type = 'button'; if (o2.id) b.id = o2.id; if (o2.onClick) b.addEventListener('click', o2.onClick);
-        toolbar.appendChild(b); return b;
+        tbar.appendChild(b); return b;
       },
     };
     return api;
@@ -581,5 +779,13 @@
   }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', () => enhance()); else enhance();
 
-  global.LabUI = { Pane, Folder, Binding, shell, dropTarget, fmt, el, enhance };
+  // change a tool/button label without losing its icon
+  function setLabel(target, text) {
+    const b = typeof target === 'string' ? doc.querySelector(target) : target;
+    if (!b) return;
+    const t = b.querySelector('.lab-tool-text');
+    if (t) t.textContent = text; else if (b.querySelector('svg')) { let span = b.querySelector('span'); if (!span) { span = el('span', 'lab-tool-text'); b.appendChild(span); } span.textContent = text; } else b.textContent = text;
+  }
+
+  global.LabUI = { Pane, Folder, Binding, shell, dropTarget, fmt, el, enhance, icon, menubar, toolbar, bindTip, setLabel, ICONS };
 })(window);

@@ -8,15 +8,15 @@
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body class="lab">
-    <div class="lab-shell lab-side-left">
+    <div class="lab-shell lab-side-left lab-no-rail lab-no-tools2">
       <header class="lab-top">
         <div class="lab-brand"><span class="lab-mark"></span><b>EMOJIFY</b><span>emoji mosaic generator</span></div>
-        <nav class="lab-menu"><a href="/camera" class="nav-link">camera</a></nav>
+        <nav class="lab-menu" id="menus"></nav>
         <div class="lab-spacer"></div>
-        <div class="lab-toolbar">
-          <button id="process" class="lab-btn lab-accent">process</button>
-        </div>
       </header>
+      <div class="lab-tools" id="tools"></div>
+      <div class="lab-tools2"></div>
+      <div class="lab-rail"></div>
 
       <aside class="lab-side">
         <section class="lab-panel"><div class="lab-panel-head"><span class="lab-title">Media</span></div><div class="lab-panel-body">
@@ -60,7 +60,6 @@
         </div></section>
 
         <section class="lab-panel"><div class="lab-panel-head"><span class="lab-title">Job</span></div><div class="lab-panel-body">
-          <div class="lab-btns"><button class="lab-btn lab-accent" type="button" onclick="document.getElementById('process').click()">process</button></div>
           <div class="status-bar">
             <div id="status" class="lab-status-line status-text">ready</div>
             <div class="progress-wrap lab-progress" id="progress-wrap" style="display:none"><div class="bar"><span id="progress-bar"></span></div></div>
@@ -70,7 +69,8 @@
         <div class="lab-note footer-text">made by humberto &middot; <a href="https://hubmerto.com" target="_blank" rel="noreferrer">hubmerto.com</a></div>
       </aside>
 
-      <main class="lab-view">
+      <main class="lab-view lab-has-doc">
+        <div class="lab-doc"><span class="lab-lights"><i></i><i></i><i></i></span><span class="lab-doc-title">Preview</span><span class="lab-doc-right" id="docRight"></span></div>
         <div class="preview-panel" id="preview-panel">
           <div class="preview-placeholder" id="preview-placeholder"><span>preview will appear here</span></div>
           <div class="preview-content" id="preview-content" style="display:none"></div>
@@ -80,10 +80,22 @@
         </div>
       </main>
 
-      <footer class="lab-status"><span>Ruby CLI · Flask · ffmpeg</span><span class="lab-spacer"></span><span>Emojify</span></footer>
+      <footer class="lab-status"><span>Drop an image, GIF or video on the media palette, set the options, process</span><span class="lab-spacer"></span><span class="lab-cell">Ruby · Flask · ffmpeg</span><span class="lab-cell">Emojify</span></footer>
     </div>
 
     <script src="/static/lab-ui/lab-ui.js"></script>
+    <script>
+      LabUI.menubar(document.getElementById('menus'), [
+        { title: 'File', items: [{ title: 'Choose file…', icon: 'folder', onClick: () => document.getElementById('file').click() }, { sep: true }, { title: 'Download result', icon: 'download', onClick: () => document.getElementById('download-link').click() }] },
+        { title: 'Job', items: [{ title: 'Process', icon: 'bolt', click: '#process' }] },
+        { title: 'View', items: [{ title: 'Camera', icon: 'camera', onClick: () => { location.href = '/camera'; } }] },
+      ]);
+      LabUI.toolbar(document.getElementById('tools'), [
+        [{ icon: 'folder', tip: 'Choose file', onClick: () => document.getElementById('file').click() }, { icon: 'camera', tip: 'Camera', onClick: () => { location.href = '/camera'; } }],
+        { spacer: true },
+        [{ icon: 'download', tip: 'Download result', onClick: () => document.getElementById('download-link').click() }, { icon: 'bolt', text: 'process', tip: 'Run the mosaic', primary: true, id: 'process' }],
+      ]);
+    </script>
     <script src="/static/app.js"></script>
   </body>
 </html>
