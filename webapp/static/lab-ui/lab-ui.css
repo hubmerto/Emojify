@@ -809,3 +809,13 @@ html.lab-root, html.lab-root body { height: 100%; }
 .lab-status > span.lab-cell { border-left: 1px solid #3f3f46; box-shadow: inset 1px 0 0 rgba(255,255,255,.06); color: #e6e6ea; }
 .lab-status .lab-dot { border-color: #000; }
 .lab-widget input[type=number]::-webkit-inner-spin-button, .lab-widget input[type=number]::-webkit-outer-spin-button { opacity: 1; filter: invert(1) brightness(1.2); cursor: ns-resize; }
+
+/* rail: groups stack vertically, one icon per row, outlined like the toolbar groups */
+:root { --lab-rail: 32px; }
+.lab-rail { padding: 5px 0; gap: 5px; }
+.lab-rail .lab-tgroup { flex-direction: column; height: auto; width: 24px; margin: 0; padding: 1px 0; overflow: visible; }
+.lab-rail .lab-tool { width: 22px; min-width: 22px; height: 21px; padding: 0; margin: 0; border: 0; border-bottom: 1px solid #2c2c32; border-radius: 0; justify-content: center; }
+.lab-rail .lab-tgroup > .lab-tool:last-child { border-bottom: 0; }
+.lab-rail .lab-tool:hover { background: linear-gradient(rgba(255,255,255,.14), rgba(255,255,255,.04)); border-color: #2c2c32; }
+.lab-rail .lab-tool.on { background: #1b1b20; box-shadow: inset 0 0 0 1px var(--lab-outline), inset 0 0 0 2px #000; border-radius: 2px; }
+.lab-rail .lab-tsep { width: 16px; height: 1px; margin: 0; background: var(--lab-outline); opacity: .55; box-shadow: none; }
