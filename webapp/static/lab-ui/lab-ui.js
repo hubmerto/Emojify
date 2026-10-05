@@ -5,7 +5,7 @@
      shell(opts)        builds the app frame: top bar, side column, viewport, status strip
      Pane               Tweakpane-compatible subset: addFolder / addBinding / addButton /
                         addBlade({view:'list'}) / addButtons / addStatus / addProgress /
-                        addPresets / addNote / addSeparator / refresh / on('change')
+                        addPresets (text or thumbnails) / addNote / addSeparator / refresh / on('change')
      fmt(value, step)   number formatting shared by every slider
    }
 
@@ -86,12 +86,20 @@
       this.view = view;
       const build = Binding.views[view] || Binding.views.text;
       build.call(this, row, o);
+      // instrument rows: the label lives inside the field, not in a column to its left
+      if (o.inline !== false) {
+        const text = this._label.textContent;
+        const w = row.querySelector('.lab-widget');
+        const c = row.querySelector('.lab-check');
+        if (w && !row.classList.contains('lab-full')) { this._in = el('span', 'lab-in', text); w.prepend(this._in); row.classList.add('lab-inline'); }
+        else if (c) { this._in = el('span', 'lab-in', text); c.appendChild(this._in); row.classList.add('lab-inline'); }
+      }
       if (o.hidden) this.hidden = true;
       if (o.disabled) this.disabled = true;
       if (o.onChange) this.on('change', (ev) => o.onChange(ev.value, ev));
     }
     get label() { return this._label.textContent; }
-    set label(t) { this._label.textContent = t; }
+    set label(t) { this._label.textContent = t; if (this._in) this._in.textContent = t; }
     get value() { return this.obj[this.key]; }
     set value(v) { this.obj[this.key] = v; this.refresh(); }
     _commit(v, last) {
@@ -358,16 +366,63 @@
     }
   }
 
+
+  // XY pad: two numeric keys on one surface. addPad(obj, xKey, yKey, {xmin,xmax,ymin,ymax,xLabel,yLabel,label,onChange})
+  class PadControl extends Control {
+    constructor(parent, obj, xKey, yKey, o) {
+      o = o || {};
+      const row = el('div', 'lab-row lab-full');
+      super(parent, row);
+      this.obj = obj; this.xKey = xKey; this.yKey = yKey; this.opts = o;
+      const pad = el('div', 'lab-pad'); row.appendChild(pad);
+      const h = el('i', 'lab-pad-h'), v = el('i', 'lab-pad-v'), dot = el('i', 'lab-pad-dot');
+      const ax = el('span', 'lab-pad-ax lab-pad-x', o.xLabel || xKey), ay = el('span', 'lab-pad-ax lab-pad-y', o.yLabel || yKey), rd = el('span', 'lab-pad-rd');
+      pad.append(h, v, dot, ay, ax, rd);
+      if (o.label) { const t = el('span', 'lab-pad-title', o.label); pad.appendChild(t); }
+      const xr = [o.xmin != null ? o.xmin : 0, o.xmax != null ? o.xmax : 1], yr = [o.ymin != null ? o.ymin : 0, o.ymax != null ? o.ymax : 1];
+      const xd = o.xDigits != null ? o.xDigits : 2, yd = o.yDigits != null ? o.yDigits : 2;
+      const nx = () => clamp((+obj[xKey] - xr[0]) / (xr[1] - xr[0]), 0, 1), ny = () => clamp((+obj[yKey] - yr[0]) / (yr[1] - yr[0]), 0, 1);
+      this.refresh = () => { const x = nx() * 100, y = (1 - ny()) * 100; v.style.left = x + '%'; h.style.top = y + '%'; dot.style.left = x + '%'; dot.style.top = y + '%'; rd.textContent = (+obj[xKey]).toFixed(xd) + ' · ' + (+obj[yKey]).toFixed(yd); };
+      this.refresh();
+      const set = (e, last) => {
+        const r = pad.getBoundingClientRect();
+        const fx = clamp((e.clientX - r.left) / r.width, 0, 1), fy = clamp(1 - (e.clientY - r.top) / r.height, 0, 1);
+        let x = xr[0] + fx * (xr[1] - xr[0]), y = yr[0] + fy * (yr[1] - yr[0]);
+        if (o.xStep) x = Math.round(x / o.xStep) * o.xStep; if (o.yStep) y = Math.round(y / o.yStep) * o.yStep;
+        obj[xKey] = +x.toFixed(6); obj[yKey] = +y.toFixed(6); this.refresh();
+        this.emit('change', { value: [obj[xKey], obj[yKey]], last, target: this });
+        if (o.onChange) o.onChange(obj[xKey], obj[yKey], last);
+      };
+      pad.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; pad.setPointerCapture(e.pointerId); pad.classList.add('drag'); set(e, false); e.preventDefault(); });
+      pad.addEventListener('pointermove', (e) => { if (pad.classList.contains('drag')) set(e, false); });
+      const up = (e) => { if (!pad.classList.contains('drag')) return; pad.classList.remove('drag'); set(e, true); };
+      pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up);
+      pad.addEventListener('dblclick', () => { if (o.reset) { obj[xKey] = o.reset[0]; obj[yKey] = o.reset[1]; this.refresh(); this.emit('change', { value: o.reset, last: true, target: this }); if (o.onChange) o.onChange(obj[xKey], obj[yKey], true); } });
+      this.pad = pad;
+    }
+  }
+
   class PresetsControl extends Control {
     constructor(parent, names, o) {
       o = o || {};
       const row = el('div', 'lab-row lab-full');
       super(parent, row);
-      const grid = el('div', 'lab-presets' + (o.cols ? ' lab-cols-' + o.cols : ''));
+      const thumbs = o.thumbs;   // true: a canvas per preset the tool paints; {name: url}: static images
+      const grid = el('div', 'lab-presets' + (o.cols ? ' lab-cols-' + o.cols : '') + (thumbs ? ' lab-thumbs' : ''));
+      if (thumbs && o.aspect) grid.style.setProperty('--lab-thumb-aspect', o.aspect);
       row.appendChild(grid);
-      this.grid = grid; this.buttons = {};
+      this.grid = grid; this.buttons = {}; this.thumbs = {};
       names.forEach((name) => {
-        const b = el('button', 'lab-btn', o.format ? o.format(name) : name); b.type = 'button';
+        const label = o.format ? o.format(name) : name;
+        const b = el('button', 'lab-btn' + (thumbs ? ' lab-thumb' : ''), thumbs ? '' : label); b.type = 'button'; b.title = label;
+        if (thumbs) {
+          const src = typeof thumbs === 'object' ? thumbs[name] : null;
+          const img = src ? el('img', 'lab-thumb-img') : el('canvas', 'lab-thumb-img');
+          if (src) { img.src = src; img.alt = ''; img.loading = 'lazy'; img.draggable = false; }
+          else { img.width = o.thumbWidth || 160; img.height = o.thumbHeight || 90; }
+          b.append(img, el('span', 'lab-thumb-cap', label));
+          this.thumbs[name] = img;
+        }
         b.addEventListener('click', () => { this.select(name); this.emit('select', { name, target: this }); if (o.onSelect) o.onSelect(name); });
         this.buttons[name] = b; grid.appendChild(b);
       });
@@ -375,6 +430,9 @@
     }
     select(name) { Object.keys(this.buttons).forEach((k) => this.buttons[k].classList.toggle('on', k === name)); this.current = name; }
     clear() { this.select(null); }
+    // paint every canvas thumbnail: fn(name, canvas)
+    render(fn) { Object.keys(this.thumbs).forEach((name) => { const t = this.thumbs[name]; if (t.tagName === 'CANVAS') fn(name, t); }); }
+    setThumb(name, src) { const t = this.thumbs[name]; if (!t) return; if (t.tagName === 'IMG') t.src = src; else { const i = new Image(); i.onload = () => t.getContext('2d').drawImage(i, 0, 0, t.width, t.height); i.src = src; } }
   }
 
   class StatusControl extends Control {
@@ -431,7 +489,7 @@
       head.append(el('span', 'lab-chev'), el('span', 'lab-title', o.title || ''));
       const right = el('span', 'lab-head-right'); head.appendChild(right);
       this.head = head; this.headRight = right; head._labWired = true; // enhance() must not bind a second toggle
-      this.body = el('div', 'lab-panel-body');
+      this.body = el('div', 'lab-panel-body' + (o.cols ? ' lab-cols-' + o.cols : ''));
       this.element.append(head, this.body);
       head.addEventListener('click', (e) => { if (e.target.closest('.lab-head-right')) return; this.expanded = !this.expanded; });
       this._badge = null;
@@ -463,6 +521,7 @@
       return this.addNote(o.text || '');
     }
     addPresets(names, o) { return this._add(new PresetsControl(this, names, o)); }
+    addPad(obj, xKey, yKey, o) { return this._add(new PadControl(this, obj, xKey, yKey, o)); }
     addStatus(text, o) { return this._add(new StatusControl(this, text, o)); }
     addProgress(o) { return this._add(new ProgressControl(this, o)); }
     addNote(html) { return this._add(new NoteControl(this, html)); }
@@ -719,7 +778,34 @@
           if (!ruler._ro) { ruler._ro = new ResizeObserver(draw); ruler._ro.observe(ruler); }
           ruler._draw = draw;
         }
-        return { bar, field, ruler, setTitle: (t) => { bar.querySelector('.lab-doc-title').textContent = t; }, setRight: (t) => { bar.querySelector('.lab-doc-right').textContent = t; } };
+        let foot = view.querySelector('.lab-docfoot'), zoomApi = null;
+        if (opts.zoom) {
+          if (!foot) { foot = el('div', 'lab-docfoot'); view.appendChild(foot); view.classList.add('lab-has-docfoot'); }
+          foot.textContent = '';
+          const levels = Array.isArray(opts.zoom) ? opts.zoom : [25, 50, 75, 100, 120, 150, 200, 300, 400];
+          const sel = el('div', 'lab-widget lab-select lab-zoom-sel'); const se = el('select');
+          const opF = el('option', null, 'Fit'); opF.value = 'fit'; se.appendChild(opF);
+          levels.forEach((z) => { const op = el('option', null, z + '%'); op.value = String(z); se.appendChild(op); });
+          sel.appendChild(se);
+          const minus = el('button', 'lab-tool', '−'), plus = el('button', 'lab-tool', '+'); minus.type = plus.type = 'button';
+          const grp = el('div', 'lab-tgroup'); grp.append(minus, plus);
+          const lab = el('span', 'lab-tlabel', 'view');
+          foot.append(lab, sel, grp, el('span', 'lab-spacer'));
+          if (opts.footRight) { const r = el('span', 'lab-foot-right', opts.footRight); foot.appendChild(r); foot._right = r; }
+          let cur = 'fit';
+          const apply = (z) => {
+            cur = z; se.value = String(z);
+            const f = z === 'fit' ? 1 : z / 100;
+            view.style.setProperty('--lab-zoom', String(f)); view.classList.toggle('lab-zoomed', f !== 1);
+            if (opts.onZoom) opts.onZoom(f, z);
+          };
+          se.addEventListener('change', () => apply(se.value === 'fit' ? 'fit' : +se.value));
+          const step = (d) => { const i = cur === 'fit' ? levels.indexOf(100) : levels.indexOf(cur); const j = clamp(i + d, 0, levels.length - 1); apply(levels[j]); };
+          minus.addEventListener('click', () => step(-1)); plus.addEventListener('click', () => step(1));
+          apply(opts.zoomValue || 'fit');
+          zoomApi = { setZoom: apply, getZoom: () => cur, foot, setFootRight: (t) => { if (foot._right) foot._right.textContent = t; } };
+        }
+        return Object.assign({ bar, field, ruler, setTitle: (t) => { bar.querySelector('.lab-doc-title').textContent = t; }, setRight: (t) => { bar.querySelector('.lab-doc-right').textContent = t; } }, zoomApi || {});
       },
       setTools(groups) { Object.assign(toolRefs, LabUI.toolbar(tools, groups)); return toolRefs; },
       setMenus(menus) { menu.textContent = ''; menubar(menu, menus); },
@@ -776,6 +862,17 @@
 
   // static markup: wire collapsible .lab-panel sections written by hand
   function enhance(root) {
+    // hand-written rows: one label + one widget (or one checkbox) become instrument rows like the bound ones
+    (root || doc).querySelectorAll('.lab-row').forEach((r) => {
+      if (r._labInlined || r.classList.contains('lab-inline') || r.classList.contains('lab-full') || r.classList.contains('lab-keep-label')) return;
+      const lab = r.querySelector(':scope > label:not(.lab-check)');
+      if (!lab) return;
+      const kids = [...r.children].filter((k) => k !== lab);
+      if (kids.length !== 1) return;
+      const k = kids[0];
+      if (k.classList.contains('lab-widget') && !k.querySelector('.lab-in')) { k.prepend(el('span', 'lab-in', lab.textContent)); r.classList.add('lab-inline'); r._labInlined = true; }
+      else if (k.classList.contains('lab-check') && !k.querySelector('.lab-in') && !k.textContent.trim()) { k.appendChild(el('span', 'lab-in', lab.textContent)); r.classList.add('lab-inline'); r._labInlined = true; }
+    });
     (root || doc).querySelectorAll('.lab-panel-head').forEach((h) => {
       if (h._labWired) return; h._labWired = true;
       if (!h.querySelector('.lab-chev')) h.insertBefore(el('span', 'lab-chev'), h.firstChild);
