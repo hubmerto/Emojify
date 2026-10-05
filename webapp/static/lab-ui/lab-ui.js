@@ -430,7 +430,7 @@
       const head = el('div', 'lab-panel-head');
       head.append(el('span', 'lab-chev'), el('span', 'lab-title', o.title || ''));
       const right = el('span', 'lab-head-right'); head.appendChild(right);
-      this.head = head; this.headRight = right;
+      this.head = head; this.headRight = right; head._labWired = true; // enhance() must not bind a second toggle
       this.body = el('div', 'lab-panel-body');
       this.element.append(head, this.body);
       head.addEventListener('click', (e) => { if (e.target.closest('.lab-head-right')) return; this.expanded = !this.expanded; });
