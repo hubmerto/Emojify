@@ -862,6 +862,17 @@
 
   // static markup: wire collapsible .lab-panel sections written by hand
   function enhance(root) {
+    // hand-written rows: one label + one widget (or one checkbox) become instrument rows like the bound ones
+    (root || doc).querySelectorAll('.lab-row').forEach((r) => {
+      if (r._labInlined || r.classList.contains('lab-inline') || r.classList.contains('lab-full') || r.classList.contains('lab-keep-label')) return;
+      const lab = r.querySelector(':scope > label:not(.lab-check)');
+      if (!lab) return;
+      const kids = [...r.children].filter((k) => k !== lab);
+      if (kids.length !== 1) return;
+      const k = kids[0];
+      if (k.classList.contains('lab-widget') && !k.querySelector('.lab-in')) { k.prepend(el('span', 'lab-in', lab.textContent)); r.classList.add('lab-inline'); r._labInlined = true; }
+      else if (k.classList.contains('lab-check') && !k.querySelector('.lab-in') && !k.textContent.trim()) { k.appendChild(el('span', 'lab-in', lab.textContent)); r.classList.add('lab-inline'); r._labInlined = true; }
+    });
     (root || doc).querySelectorAll('.lab-panel-head').forEach((h) => {
       if (h._labWired) return; h._labWired = true;
       if (!h.querySelector('.lab-chev')) h.insertBefore(el('span', 'lab-chev'), h.firstChild);
