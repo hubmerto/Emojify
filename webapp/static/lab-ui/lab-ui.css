@@ -27,7 +27,7 @@
   --lab-pal-title-lo: #2b2e37;
   --lab-pal-line: #000;
 
-  --lab-doc-bg: #070914;
+  --lab-doc-bg: #000;
   --lab-doc-title-hi: #66708a;
   --lab-doc-title-lo: #2f3545;
   --lab-marker: #e8321f;
@@ -316,7 +316,7 @@ html.lab-root, html.lab-root body { height: 100%; }
 .lab-docbar .lab-tool { height: 17px; min-width: 20px; }
 .lab-ruler {
   position: absolute; left: 0; right: 0; top: 42px; height: 13px; z-index: 4;
-  background: linear-gradient(#141828, #0d1020); border-bottom: 1px solid #000; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); pointer-events: none;
+  background: linear-gradient(#0e0e10, #000); border-bottom: 1px solid #2a2a2e; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); pointer-events: none;
 }
 .lab-ruler canvas { width: 100%; height: 100%; display: block; }
 .lab-view.lab-has-doc { padding-top: 33px; }
@@ -326,7 +326,7 @@ html.lab-root, html.lab-root body { height: 100%; }
 .lab-hud {
   position: absolute; left: 10px; top: 8px;
   font: var(--lab-fs-xs)/1.5 var(--lab-mono);
-  color: #9aa0b4;
+  color: #a0a0a8;
   pointer-events: none; white-space: pre; z-index: 3;
   text-shadow: 0 1px 0 rgba(0,0,0,.7);
 }
@@ -336,7 +336,7 @@ html.lab-root, html.lab-root body { height: 100%; }
 .lab-hint {
   position: absolute; left: 10px; bottom: 8px; right: 10px;
   font: var(--lab-fs-xs)/1.5 var(--lab-mono);
-  color: #5b6179;
+  color: #66666e;
   pointer-events: none; z-index: 3;
 }
 .lab-drop {
@@ -742,7 +742,7 @@ html.lab-root, html.lab-root body { height: 100%; }
 .lab-doc .lab-lights i:nth-child(2) { background: radial-gradient(circle at 40% 35%, #a6bdff, #2a52e2); }
 .lab-doc .lab-lights i:nth-child(3) { background: radial-gradient(circle at 40% 35%, #e8a8ff, #8a2cd3); }
 .lab-docbar { background: linear-gradient(#111114, #08080a); border-bottom: 1px solid #3a3a40; box-shadow: inset 0 1px 0 rgba(255,255,255,.07); }
-.lab-ruler { background: linear-gradient(#111420, #090b14); }
+.lab-ruler { background: linear-gradient(#0e0e10, #000); }
 
 /* dock + palettes: black bodies, light outlines, glossy black title */
 .lab-side { background: #040406; }
