@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- lab-ui: black palette body, light hairline, the three document lights -->
+  <rect x="1.5" y="1.5" width="29" height="29" rx="6" fill="#0b0b0d" stroke="#8f8f96" stroke-width="1"/>
+  <rect x="2.5" y="2.5" width="27" height="27" rx="5" fill="none" stroke="#000" stroke-width="1"/>
+  <rect x="5" y="5" width="22" height="7" rx="2" fill="#1d1d22"/>
+  <circle cx="9" cy="8.5" r="2.1" fill="#49d6f0"/>
+  <circle cx="16" cy="8.5" r="2.1" fill="#4a7af0"/>
+  <circle cx="23" cy="8.5" r="2.1" fill="#b45ae8"/>
+  <rect x="6" y="16" width="20" height="3" rx="1" fill="#000" stroke="#8f8f96" stroke-width=".8"/>
+  <rect x="6" y="22" width="20" height="3" rx="1" fill="#000" stroke="#8f8f96" stroke-width=".8"/>
+  <rect x="6.5" y="16.5" width="9" height="2" fill="#3d7ddc"/>
+</svg>
