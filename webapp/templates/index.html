@@ -1,130 +1,101 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="lab-root">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Emojify</title>
+    <link rel="stylesheet" href="/static/lab-ui/lab-ui.css" />
     <link rel="stylesheet" href="/static/style.css" />
   </head>
-  <body>
-    <div class="app-wide">
-      <header class="app-header">
-        <div style="display:flex;justify-content:space-between;align-items:baseline">
-          <div>
-            <div class="app-title">Emojify</div>
-            <div class="app-subtitle">emoji mosaic generator</div>
-          </div>
-          <nav style="display:flex;gap:16px">
-            <a href="/camera" class="nav-link">camera</a>
-          </nav>
-        </div>
+  <body class="lab">
+    <div class="lab-shell lab-side-left lab-no-rail lab-no-tools2">
+      <header class="lab-top">
+        <div class="lab-brand"><span class="lab-mark"></span><b>EMOJIFY</b><span>emoji mosaic generator</span></div>
+        <nav class="lab-menu" id="menus"></nav>
+        <div class="lab-spacer"></div>
       </header>
+      <div class="lab-tools" id="tools"></div>
+      <div class="lab-tools2"></div>
+      <div class="lab-rail"></div>
 
-      <div class="two-col">
-        <!-- Left: controls -->
-        <div class="col-left">
-          <div class="section">
-            <div class="section-label">media</div>
-            <div id="dropzone" class="dropzone">
-              <input id="file" type="file" accept="video/*,image/*" />
-              <span class="drop-title" id="drop-title">drop file here</span>
-              <span class="drop-sub" id="drop-sub">or click to browse</span>
-            </div>
+      <aside class="lab-side">
+        <section class="lab-panel"><div class="lab-panel-head"><span class="lab-title">Media</span></div><div class="lab-panel-body">
+          <div id="dropzone" class="dropzone lab-dropzone">
+            <input id="file" type="file" accept="video/*,image/*" />
+            <span class="drop-title" id="drop-title">drop file here</span>
+            <span class="drop-sub" id="drop-sub">or click to browse</span>
           </div>
+        </div></section>
 
-          <div class="section">
-            <div class="section-label">options</div>
-            <div class="controls">
-              <label id="preset-control">
-                preset
-                <select id="preset">
-                  <option value="custom">Custom</option>
-                  <option value="fast">Fast</option>
-                  <option value="balanced" selected>Balanced</option>
-                  <option value="detail">High detail</option>
-                </select>
-              </label>
-              <label id="fps-control">
-                fps
-                <input id="fps" type="number" min="1" max="30" value="8" />
-              </label>
-              <label>
-                emoji size
-                <input id="size" type="number" min="4" max="48" value="12" />
-              </label>
-              <label>
-                scatter (overlap + size variation)
-                <select id="scatter">
-                  <option value="no">No</option>
-                  <option value="yes">Yes</option>
-                </select>
-              </label>
-              <label>
-                spread (no same emoji next to itself)
-                <select id="no-adjacent">
-                  <option value="no">No</option>
-                  <option value="yes">Yes</option>
-                </select>
-              </label>
-              <label>
-                max uses per emoji
-                <input id="max-uses" type="number" min="0" max="10000" value="0" />
-              </label>
-              <label>
-                merge matching blocks up to
-                <input id="max-block" type="number" min="1" max="16" value="1" />
-              </label>
-              <label id="bg-control">
-                background
-                <select id="bg">
-                  <option value="black">Black</option>
-                  <option value="white">White</option>
-                  <option value="transparent">Transparent</option>
-                  <option value="image">Original image</option>
-                </select>
-              </label>
-              <label>
-                format
-                <select id="format">
-                  <option value="mp4">MP4</option>
-                  <option value="gif">GIF</option>
-                </select>
-              </label>
-            </div>
-          </div>
+        <section class="lab-panel"><div class="lab-panel-head"><span class="lab-title">Options</span></div><div class="lab-panel-body">
+          <div class="lab-row" id="preset-control"><label for="preset">preset</label><div class="lab-widget lab-select"><select id="preset">
+            <option value="custom">Custom</option>
+            <option value="fast">Fast</option>
+            <option value="balanced" selected>Balanced</option>
+            <option value="detail">High detail</option>
+          </select></div></div>
+          <div class="lab-row" id="fps-control"><label for="fps">fps</label><div class="lab-widget lab-text"><input id="fps" type="number" min="1" max="30" value="8" /></div></div>
+          <div class="lab-row"><label for="size">emoji size</label><div class="lab-widget lab-text"><input id="size" type="number" min="4" max="48" value="12" /></div></div>
+          <div class="lab-row"><label for="scatter" title="overlap + size variation">scatter</label><div class="lab-widget lab-select"><select id="scatter">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select></div></div>
+          <div class="lab-row"><label for="no-adjacent" title="no same emoji next to itself">spread</label><div class="lab-widget lab-select"><select id="no-adjacent">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select></div></div>
+          <div class="lab-row"><label for="max-uses">max uses per emoji</label><div class="lab-widget lab-text"><input id="max-uses" type="number" min="0" max="10000" value="0" /></div></div>
+          <div class="lab-row"><label for="max-block">merge blocks up to</label><div class="lab-widget lab-text"><input id="max-block" type="number" min="1" max="16" value="1" /></div></div>
+          <div class="lab-row" id="bg-control"><label for="bg">background</label><div class="lab-widget lab-select"><select id="bg">
+            <option value="black">Black</option>
+            <option value="white">White</option>
+            <option value="transparent">Transparent</option>
+            <option value="image">Original image</option>
+          </select></div></div>
+          <div class="lab-row"><label for="format">format</label><div class="lab-widget lab-select"><select id="format">
+            <option value="mp4">MP4</option>
+            <option value="gif">GIF</option>
+          </select></div></div>
+          <div class="lab-note">scatter = overlap + size variation · spread = no same emoji next to itself · merge = flat regions collapse into larger glyphs</div>
+        </div></section>
 
-          <div class="button-row">
-            <button id="process" class="btn primary">process</button>
-          </div>
-
+        <section class="lab-panel"><div class="lab-panel-head"><span class="lab-title">Job</span></div><div class="lab-panel-body">
           <div class="status-bar">
-            <div id="status" class="status-text">ready</div>
-            <div class="progress-wrap" id="progress-wrap" style="display:none">
-              <div class="bar"><span id="progress-bar"></span></div>
-            </div>
+            <div id="status" class="lab-status-line status-text">ready</div>
+            <div class="progress-wrap lab-progress" id="progress-wrap" style="display:none"><div class="bar"><span id="progress-bar"></span></div></div>
+          </div>
+        </div></section>
+
+        <div class="lab-note footer-text">made by humberto &middot; <a href="https://hubmerto.com" target="_blank" rel="noreferrer">hubmerto.com</a></div>
+      </aside>
+
+      <main class="lab-view lab-has-doc">
+        <div class="lab-doc"><span class="lab-lights"><i></i><i></i><i></i></span><span class="lab-doc-title">Preview</span><span class="lab-doc-right" id="docRight"></span></div>
+        <div class="preview-panel" id="preview-panel">
+          <div class="preview-placeholder" id="preview-placeholder"><span>preview will appear here</span></div>
+          <div class="preview-content" id="preview-content" style="display:none"></div>
+          <div class="preview-actions" id="preview-actions" style="display:none">
+            <a id="download-link" class="lab-btn lab-accent" download>download</a>
           </div>
         </div>
+      </main>
 
-        <!-- Right: preview -->
-        <div class="col-right">
-          <div class="preview-panel" id="preview-panel">
-            <div class="preview-placeholder" id="preview-placeholder">
-              <span>preview will appear here</span>
-            </div>
-            <div class="preview-content" id="preview-content" style="display:none"></div>
-            <div class="preview-actions" id="preview-actions" style="display:none">
-              <a id="download-link" class="btn" download>download</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer-text">
-        made by humberto &middot;
-        <a href="https://hubmerto.com" target="_blank" rel="noreferrer">hubmerto.com</a>
-      </div>
+      <footer class="lab-status"><span>Drop an image, GIF or video on the media palette, set the options, process</span><span class="lab-spacer"></span><span class="lab-cell">Ruby · Flask · ffmpeg</span><span class="lab-cell">Emojify</span></footer>
     </div>
 
+    <script src="/static/lab-ui/lab-ui.js"></script>
+    <script>
+      LabUI.menubar(document.getElementById('menus'), [
+        { title: 'File', items: [{ title: 'Choose file…', icon: 'folder', onClick: () => document.getElementById('file').click() }, { sep: true }, { title: 'Download result', icon: 'download', onClick: () => document.getElementById('download-link').click() }] },
+        { title: 'Job', items: [{ title: 'Process', icon: 'bolt', click: '#process' }] },
+        { title: 'View', items: [{ title: 'Camera', icon: 'camera', onClick: () => { location.href = '/camera'; } }] },
+      ]);
+      LabUI.toolbar(document.getElementById('tools'), [
+        [{ icon: 'folder', tip: 'Choose file', onClick: () => document.getElementById('file').click() }, { icon: 'camera', tip: 'Camera', onClick: () => { location.href = '/camera'; } }],
+        { spacer: true },
+        [{ icon: 'download', tip: 'Download result', onClick: () => document.getElementById('download-link').click() }, { icon: 'bolt', text: 'process', tip: 'Run the mosaic', primary: true, id: 'process' }],
+      ]);
+    </script>
     <script src="/static/app.js"></script>
   </body>
 </html>
